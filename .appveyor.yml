@@ -11,6 +11,7 @@ environment:
     - arch: Win64
 
 init:
+  - echo %arch%
   - set garch=
   - if "%arch%"=="Win64" ( set garch= Win64)
   - echo %garch%
