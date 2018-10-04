@@ -28,4 +28,5 @@ before_build:
   - cmake .. -G "%makegen%"
 
 build_script:
-  - msbuild /p:Platform=%arch% "ALL_BUILD.vcxproj"
+  - msbuild /p:Platform=%arch% /p:Configuration=Debug "ALL_BUILD.vcxproj"
+  - msbuild /p:Platform=%arch% /p:Configuration=Release "ALL_BUILD.vcxproj"
