@@ -108,6 +108,7 @@ uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max) {
 		double d;
 		char c[8];
 	} data;
+	data.d = 0;
 
 	// Read backwards if host is little-endian, else read it forward.
 	if (le) {
@@ -137,11 +138,11 @@ uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max) {
 
 	// Get string length and bounds check.
 	size_t l = strlen(str);
-	uint16_t sl = l;
 	uint32_t size = l + 3;
 	if (l > 0xFFFF || size > max) {
 		return 0;
 	}
+	uint16_t sl = (uint16_t)l;
 
 	// Write the string marker.
 	*p = '\x02';
@@ -339,6 +340,7 @@ flshm_keys flshm_get_keys(bool is_per_user) {
 
 #ifdef _WIN32
 
+	(void)is_per_user;
 	strcpy(keys.sem, "MacromediaMutexOmega");
 	strcpy(keys.shm, "MacromediaFMOmega");
 
@@ -358,6 +360,8 @@ flshm_keys flshm_get_keys(bool is_per_user) {
 	}
 
 #else
+
+	(void)is_per_user;
 
 	// Generate key.
 	key_t key = (key_t)flshm_hash_uid(getuid());
@@ -904,8 +908,8 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// All the properties to be set.
 	uint32_t tick;
 	uint32_t amfl;
-	char * name;
-	char * host;
+	char * name = NULL;
+	char * host = NULL;
 	flshm_version version = FLSHM_VERSION_1;
 	bool sandboxed = false;
 	bool https = false;
@@ -945,21 +949,23 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// Start a block that can be broken from, assume failure on break.
 	do {
 		// Read the connection name, or fail.
-		if (!(read = flshm_amf0_read_string(
+		read = flshm_amf0_read_string(
 			&name,
 			shmdata + i,
 			max - i
-		))) {
+		);
+		if (!read) {
 			break;
 		}
 		i += read;
 
 		// Read the host name, or fail.
-		if (!(read = flshm_amf0_read_string(
+		read = flshm_amf0_read_string(
 			&host,
 			shmdata + i,
 			max - i
-		))) {
+		);
+		if (!read) {
 			break;
 		}
 		i += read;
@@ -967,11 +973,12 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		// Read the optional data, if present, based on first boolean.
 
 		// Read version 2 data if present.
-		if ((read = flshm_amf0_read_boolean(
+		read = flshm_amf0_read_boolean(
 			&sandboxed,
 			shmdata + i,
 			max - i
-		))) {
+		);
+		if (read) {
 			// Read sandboxed successfully.
 			i += read;
 
@@ -979,21 +986,23 @@ flshm_message * flshm_message_read(flshm_info * info) {
 			version = FLSHM_VERSION_2;
 
 			// Read HTTPS or fail.
-			if (!(read = flshm_amf0_read_boolean(
+			read = flshm_amf0_read_boolean(
 				&https,
 				shmdata + i,
 				max - i
-			))) {
+			);
+			if (!read) {
 				break;
 			}
 			i += read;
 
 			// Read version 3 data if present, based on first double.
-			if ((read = flshm_amf0_read_double(
+			read = flshm_amf0_read_double(
 				&d2i,
 				shmdata + i,
 				max - i
-			))) {
+			);
+			if (read) {
 				// Read sandbox successfully.
 				sandbox = (int32_t)d2i;
 				i += read;
@@ -1002,11 +1011,12 @@ flshm_message * flshm_message_read(flshm_info * info) {
 				version = FLSHM_VERSION_3;
 
 				// Read version or fail.
-				if (!(read = flshm_amf0_read_double(
+				read = flshm_amf0_read_double(
 					&d2i,
 					shmdata + i,
 					max - i
-				))) {
+				);
+				if (!read) {
 					break;
 				}
 				swfv = (uint32_t)d2i;
@@ -1014,22 +1024,24 @@ flshm_message * flshm_message_read(flshm_info * info) {
 
 				// If sandbox local-with-file, includes sender filepath.
 				if (sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE) {
-					if (!(read = flshm_amf0_read_string(
+					read = flshm_amf0_read_string(
 						&filepath,
 						shmdata + i,
 						max - i
-					))) {
+					);
+					if (!read) {
 						break;
 					}
 					i += read;
 				}
 
 				// Read AMF version if present, else ignore.
-				if ((read = flshm_amf0_read_double(
+				read = flshm_amf0_read_double(
 					&d2i,
 					shmdata + i,
 					max - i
-				))) {
+				);
+				if (read) {
 					amfv = (uint32_t)d2i;
 					i += read;
 
@@ -1040,11 +1052,12 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		}
 
 		// Read the method name or fail.
-		if (!(read = flshm_amf0_read_string(
+		read = flshm_amf0_read_string(
 			&method,
 			shmdata + i,
 			max - i
-		))) {
+		);
+		if (!read) {
 			break;
 		}
 		i += read;
@@ -1131,21 +1144,23 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		uint32_t wrote;
 
 		// Write the connection name or fail.
-		if (!(wrote = flshm_amf0_write_string(
+		wrote = flshm_amf0_write_string(
 			message->name,
 			buffer + i,
 			max - i
-		))) {
+		);
+		if (!wrote) {
 			break;
 		}
 		i += wrote;
 
 		// Write the connection host or fail.
-		if (!(wrote = flshm_amf0_write_string(
+		wrote = flshm_amf0_write_string(
 			message->host,
 			buffer + i,
 			max - i
-		))) {
+		);
+		if (!wrote) {
 			break;
 		}
 		i += wrote;
@@ -1154,21 +1169,23 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		if (message->version >= FLSHM_VERSION_2) {
 
 			// Write sandboxed or fail.
-			if (!(wrote = flshm_amf0_write_boolean(
+			wrote = flshm_amf0_write_boolean(
 				message->sandboxed,
 				buffer + i,
 				max - i
-			))) {
+			);
+			if (!wrote) {
 				break;
 			}
 			i += wrote;
 
 			// Write HTTPS or fail.
-			if (!(wrote = flshm_amf0_write_boolean(
+			wrote = flshm_amf0_write_boolean(
 				message->https,
 				buffer + i,
 				max - i
-			))) {
+			);
+			if (!wrote) {
 				break;
 			}
 			i += wrote;
@@ -1177,21 +1194,23 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 			if (message->version >= FLSHM_VERSION_3) {
 
 				// Write sandbox or fail.
-				if (!(wrote = flshm_amf0_write_double(
+				wrote = flshm_amf0_write_double(
 					(double)message->sandbox,
 					buffer + i,
 					max - i
-				))) {
+				);
+				if (!wrote) {
 					break;
 				}
 				i += wrote;
 
 				// Write version or fail.
-				if (!(wrote = flshm_amf0_write_double(
+				wrote = flshm_amf0_write_double(
 					(double)message->swfv,
 					buffer + i,
 					max - i
-				))) {
+				);
+				if (!wrote) {
 					break;
 				}
 				i += wrote;
@@ -1201,11 +1220,12 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 					message->sandboxed &&
 					message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE
 				) {
-					if (!(wrote = flshm_amf0_write_string(
+					wrote = flshm_amf0_write_string(
 						message->filepath,
 						buffer + i,
 						max - i
-					))) {
+					);
+					if (!wrote) {
 						break;
 					}
 					i += wrote;
@@ -1214,11 +1234,12 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 				// Add version 4 data if specified.
 				if (message->version >= FLSHM_VERSION_4) {
 					// Write the AMF version or fail.
-					if (!(wrote = flshm_amf0_write_double(
+					wrote = flshm_amf0_write_double(
 						(double)message->amfv,
 						buffer + i,
 						max - i
-					))) {
+					);
+					if (!wrote) {
 						break;
 					}
 					i += wrote;
@@ -1227,11 +1248,12 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		}
 
 		// Write method or fail.
-		if (!(wrote = flshm_amf0_write_string(
+		wrote = flshm_amf0_write_string(
 			message->method,
 			buffer + i,
 			max - i
-		))) {
+		);
+		if (!wrote) {
 			break;
 		}
 		i += wrote;

@@ -50,11 +50,11 @@ uint32_t amf0_write_string(char * str, char * p, uint32_t max) {
 
 	// Get string length and bounds check.
 	size_t l = strlen(str);
-	uint16_t sl = l;
 	uint32_t size = l + 3;
 	if (l > 0xFFFF || size > max) {
 		return 0;
 	}
+	uint16_t sl = (uint16_t)l;
 
 	// Write the string marker.
 	*p = '\x02';
@@ -239,8 +239,8 @@ int main(int argc, char ** argv) {
 					// Create a buffer for the data, and write to it.
 					uint32_t max = 3 + strlen(msgstr);
 					char * data = malloc(max);
-					uint32_t size;
-					if ((size = amf0_write_string(msgstr, data, max))) {
+					uint32_t size = amf0_write_string(msgstr, data, max);
+					if (size) {
 
 						// Create a new filepath from the existing one.
 						char * filepath = NULL;

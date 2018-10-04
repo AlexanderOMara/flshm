@@ -3,7 +3,7 @@
 
 #include <flshm.h>
 
-int main(int argc, char ** argv) {
+int main() {
 
 	// Read the current tick.
 	uint32_t last_tick = 0;

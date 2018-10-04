@@ -14,7 +14,7 @@ char * hex_to_bin(char * hex, unsigned int * len) {
 	for (unsigned int i = 0; i < bin_len; i++) {
 		unsigned int c;
 		sscanf(hex + (i * 2), "%02x", &c);
-		bin[i] = c;
+		bin[i] = (char)c;
 	}
 	* len = bin_len;
 	return bin;

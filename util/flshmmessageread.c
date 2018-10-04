@@ -5,7 +5,7 @@
 
 #include <hexdump.h>
 
-int main(int argc, char ** argv) {
+int main() {
 
 	flshm_info * info = flshm_open(false);
 

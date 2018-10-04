@@ -13,9 +13,13 @@ IF(
 	"${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
 	"${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
 )
-	SET(c_flags "-std=c99 -D_XOPEN_SOURCE=600 -Wall -Wextra -Wno-unused-parameter -pedantic")
+	SET(c_flags "-std=c99 -D_XOPEN_SOURCE=600 -Wall -Wextra -pedantic")
 	SET(c_flags_debug "-g -O0")
 	SET(c_flags_release "-O3")
+ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	SET(c_flags "/W4 /WX /EHsc")
+	# Ignore warning about strcpy:
+	ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
 ENDIF()
 
 

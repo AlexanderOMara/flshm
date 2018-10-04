@@ -8,7 +8,7 @@
 int main(int argc, char ** argv) {
 
 	// Optionally skip null rows in the hex dump.
-	int skipNull = argc > 1 ? 1 : 0;
+	int skipNull = argc > 1 ? (argv[1][0] == '1') : 0;
 
 	// Open the shared memory.
 	flshm_info * info = flshm_open(false);
