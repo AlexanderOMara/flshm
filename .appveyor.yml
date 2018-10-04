@@ -3,14 +3,6 @@ environment:
   arch: default
   matrix:
     - platform: vs
-      vsversion: 2010
-      arch: x86
-
-    - platform: vs
-      vsversion: 2012
-      arch: x86
-
-    - platform: vs
       vsversion: 2013
       arch: x86
 
@@ -22,14 +14,6 @@ environment:
       vsversion: 2017
       arch: x86
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
-    - platform: vs
-      vsversion: 2010
-      arch: x64
-
-    - platform: vs
-      vsversion: 2012
-      arch: x64
 
     - platform: vs
       vsversion: 2013
@@ -51,8 +35,6 @@ init:
   - echo %vsversion%
   - echo %arch%
   - if %platform%==vs ( set "cmakegen=Visual Studio" )
-  - if %vsversion%==2010 ( set "cmakegen=%cmakegen% 10 %vsversion%" )
-  - if %vsversion%==2012 ( set "cmakegen=%cmakegen% 11 %vsversion%" )
   - if %vsversion%==2013 ( set "cmakegen=%cmakegen% 12 %vsversion%" )
   - if %vsversion%==2015 ( set "cmakegen=%cmakegen% 14 %vsversion%" )
   - if %vsversion%==2017 ( set "cmakegen=%cmakegen% 15 %vsversion%" )
