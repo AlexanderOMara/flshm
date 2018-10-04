@@ -5,9 +5,13 @@ environment:
     - platform: vs
       vsversion: 2017
       arch: x86
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     - platform: vs
       vsversion: 2017
       arch: x64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+configuration: Release
 
 #   image:
 #   - Visual Studio 2017
@@ -22,20 +26,23 @@ environment:
 #     - arch: Win64
 
 init:
+  - echo %platform%
+  - echo %vsversion%
   - echo %arch%
-  - set garch=
-  - if "%arch%"=="Win64" ( set garch= Win64)
-  - echo %garch%
-  - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set generator="Visual Studio 15 2017%garch%" )
-  - echo %generator%
+  # - echo %arch%
+  # - set garch=
+  # - if "%arch%"=="x64" ( set garch= Win64)
+  # - echo %garch%
+  # - echo %APPVEYOR_BUILD_WORKER_IMAGE%
+  # - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set generator="Visual Studio 15 2017%garch%" )
+  # - echo %generator%
+  - if %platform%==vs ( set "makecommand=Visual Studio" )
+  - if %vsversion%==2017 ( set "makecommand=%makecommand% 15 %vsversion%" )
+  - if %arch%==x64 ( set "makecommand=%makecommand% Win64" )
 
 before_build:
-  - cmd: |-
-      mkdir build
-      cd build
-      cmake --version
-      cmake .. -G %generator%
+  - echo %makecommand%
+  # - if %platform%==vs cmake -G "%makecommand%"
 
 build:
   project: build\flshm.sln
