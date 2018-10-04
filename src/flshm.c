@@ -642,7 +642,7 @@ bool flshm_connection_name_valid(const char * name) {
 	// Check how many colons are expected, and keep track of those seen.
 	uint8_t colons_valid = name[0] == '_' ? 0 : 1;
 	uint8_t colons = 0;
-	for (uint32_t i = 0; true; i++) {
+	for (uint32_t i = 0;; i++) {
 
 		// Check if too large.
 		if (i >= 0xFFFF) {
@@ -947,7 +947,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	uint32_t read;
 
 	// Start a block that can be broken from, assume failure on break.
-	do {
+	for (;;) {
 		// Read the connection name, or fail.
 		read = flshm_amf0_read_string(
 			&name,
@@ -1086,7 +1086,9 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		message->method = method;
 		message->size = size;
 		message->data = data;
-	} while (false);
+
+		break;
+	}
 
 	// If message not initialized, cleanup any memory allocated.
 	if (!message) {
@@ -1137,7 +1139,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 
 	// Start a block that can be broken from, assume failure on break.
 	bool success = false;
-	do {
+	for (;;) {
 		// Keep track of offset and bounds.
 		uint32_t i = 0;
 		uint32_t max = FLSHM_MESSAGE_MAX_SIZE;
@@ -1285,7 +1287,9 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 
 		// If finished the block, then successful.
 		success = true;
-	} while (false);
+
+		break;
+	}
 
 	// Free the memory and return successful or not.
 	free(buffer);
