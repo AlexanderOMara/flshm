@@ -10,11 +10,11 @@ environment:
     - arch: Win64
 
 init:
-  - set arch=
-  - if "%arch%"=="Win64" ( set arch=" Win64" )
-  - echo %arch%
+  - set garch=
+  - if "%arch%"=="Win64" ( set garch= Win64)
+  - echo %garch%
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set generator="Visual Studio 15 2017%arch%" )
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set generator="Visual Studio 15 2017%garch%" )
   - echo %generator%
 
 before_build:
