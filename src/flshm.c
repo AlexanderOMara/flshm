@@ -138,7 +138,7 @@ uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max) {
 
 	// Get string length and bounds check.
 	size_t l = strlen(str);
-	uint32_t size = l + 3;
+	uint32_t size = (uint32_t)(l + 3);
 	if (l > 0xFFFF || size > max) {
 		return 0;
 	}
@@ -230,7 +230,7 @@ uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
 char * flshm_write_connection(char * addr, flshm_connection connection) {
 
 	// Copy the name with the null byte into the list and advance past it.
-	uint32_t name_size = strlen(connection.name);
+	uint32_t name_size = (uint32_t)strlen(connection.name);
 	// Only copy name if not pointing to itself.
 	if (addr != connection.name) {
 		strcpy(addr, connection.name);
@@ -780,7 +780,7 @@ bool flshm_connection_add(flshm_info * info, flshm_connection connection) {
 	}
 
 	// Get connection name size.
-	uint32_t name_size = strlen(connection.name);
+	uint32_t name_size = (uint32_t)strlen(connection.name);
 
 	// Compute size requirements for serialized connection, includes null.
 	uint32_t serialized_size = name_size + 1;

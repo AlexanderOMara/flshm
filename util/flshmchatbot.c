@@ -50,7 +50,7 @@ uint32_t amf0_write_string(char * str, char * p, uint32_t max) {
 
 	// Get string length and bounds check.
 	size_t l = strlen(str);
-	uint32_t size = l + 3;
+	uint32_t size = (uint32_t)(l + 3);
 	if (l > 0xFFFF || size > max) {
 		return 0;
 	}
@@ -237,7 +237,7 @@ int main(int argc, char ** argv) {
 					while (tick == message->tick);
 
 					// Create a buffer for the data, and write to it.
-					uint32_t max = 3 + strlen(msgstr);
+					uint32_t max = 3 + (uint32_t)strlen(msgstr);
 					char * data = malloc(max);
 					uint32_t size = amf0_write_string(msgstr, data, max);
 					if (size) {
@@ -245,7 +245,7 @@ int main(int argc, char ** argv) {
 						// Create a new filepath from the existing one.
 						char * filepath = NULL;
 						if (message->filepath) {
-							uint32_t fpl = strlen(message->filepath);
+							uint32_t fpl = (uint32_t)strlen(message->filepath);
 							char append[] = ".chatbot.swf";
 							filepath = malloc(fpl + sizeof(append));
 							memcpy(filepath, message->filepath, fpl);
