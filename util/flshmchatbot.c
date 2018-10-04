@@ -200,7 +200,7 @@ int main(int argc, char ** argv) {
 	printf("Chatbot runnning...\n");
 
 	// Run loop.
-	while (true) {
+	for (;;) {
 		flshm_lock(info);
 		locked = true;
 
