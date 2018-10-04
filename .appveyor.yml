@@ -1,14 +1,25 @@
-image:
-  - Visual Studio 2017
-configuration:
-  - Debug
-  - Release
-platform:
-  - x86
-  - x64
 environment:
+  vsversion: none
+  arch: default
   matrix:
-    - arch: Win64
+    - platform: vs
+      vsversion: 2017
+      arch: x86
+    - platform: vs
+      vsversion: 2017
+      arch: x64
+
+#   image:
+#   - Visual Studio 2017
+# configuration:
+#   - Debug
+#   - Release
+# platform:
+#   - x86
+#   - x64
+# environment:
+#   matrix:
+#     - arch: Win64
 
 init:
   - echo %arch%
