@@ -25,6 +25,7 @@ before_build:
   - mkdir build
   - cd build
   - cmake --version
+  - echo "%makegen%"
   - cmake .. -G "%makegen%"
 
 build_script:
