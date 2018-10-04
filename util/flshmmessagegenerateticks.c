@@ -7,7 +7,7 @@ int main() {
 
 	// Read the current tick.
 	uint32_t last_tick = 0;
-	while (1) {
+	for (;;) {
 		uint32_t tick = flshm_tick();
 		if (tick != last_tick) {
 			last_tick = tick;
