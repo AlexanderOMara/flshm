@@ -4,7 +4,7 @@
 void hexdump(void * addr, unsigned int size, unsigned int col, int skipnull) {
 	unsigned char * ascii = malloc(col + 1);
 	unsigned char * hex = malloc(col * 3);
-	unsigned char * offset = malloc(5);
+	unsigned char * offset[5] = {0};
 	unsigned char * bytes = (unsigned char *)addr;
 	char * format = "%s  %s  %s\n";
 	unsigned int i = 0;
@@ -47,5 +47,4 @@ void hexdump(void * addr, unsigned int size, unsigned int col, int skipnull) {
 	// Free memory.
 	free(ascii);
 	free(hex);
-	free(offset);
 }
