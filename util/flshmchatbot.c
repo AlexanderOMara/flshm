@@ -304,7 +304,7 @@ int main(int argc, char ** argv) {
 		flshm_unlock(info);
 		locked = false;
 
-		sleep_ms(1000);
+		sleep_ms(100);
 	}
 
 	flshm_close(info);
