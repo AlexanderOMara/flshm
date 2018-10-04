@@ -42,13 +42,6 @@ init:
   - if %vsversion%==2017 set "cmakegen=%cmakegen% 15 %vsversion%"
   - if %arch%==x64 set "cmakegen=%cmakegen% Win64"
 
-before_build:
-  - mkdir build
-  - cd build
-  - cmake --version
-  - echo "%cmakegen%"
-  - cmake .. -G "%cmakegen%"
-
 build_script:
   - cmake --version
   - echo "%cmakegen%"
@@ -60,5 +53,14 @@ build_script:
       msbuild /p:Platform=%arch% /p:Configuration=Release "ALL_BUILD.vcxproj"
     )
   - if %platform%==mingw32 (
+      mkdir build-debug
+      pushd build-debug
+      cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
       mingw32 mingw32-make
+      popd
+      mkdir build-release
+      pushd build-release
+      cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
+      mingw32 mingw32-make
+      popd
     )
