@@ -11,7 +11,7 @@ int main() {
 
 	// Run loop.
 	bool running = true;
-	while (runnint) {
+	while (running) {
 		uint32_t tick = flshm_tick();
 		if (tick != last_tick) {
 			last_tick = tick;
