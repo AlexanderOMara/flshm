@@ -48,7 +48,7 @@ Pull requests are also welcome, but any changes must be cross-platform to be mer
 
 ## License
 
-Copyright (c) 2016 Alexander O'Mara
+Copyright (c) 2016-2018 Alexander O'Mara
 
 Licensed under the Mozilla Public License, v. 2.0.
 
