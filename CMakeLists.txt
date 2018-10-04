@@ -1,0 +1,45 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8 FATAL_ERROR)
+
+PROJECT("flshm")
+
+ENABLE_TESTING()
+
+
+SET(OUTLIB ${CMAKE_BINARY_DIR}/lib)
+SET(OUTBIN ${CMAKE_BINARY_DIR}/bin)
+
+
+IF(
+	"${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
+	"${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+)
+	SET(c_flags "-std=c99 -D_XOPEN_SOURCE=600 -Wall -Wextra -Wno-unused-parameter -pedantic")
+	SET(c_flags_debug "-g -O0")
+	SET(c_flags_release "-O3")
+ENDIF()
+
+
+IF(NOT CMAKE_BUILD_TYPE)
+	SET(CMAKE_BUILD_TYPE Release)
+ENDIF()
+
+
+ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(util)
+
+
+IF(NOT CONFIGURED_ONCE)
+	SET(
+		CMAKE_C_FLAGS "${c_flags}"
+		CACHE STRING "c flags" FORCE
+	)
+	SET(
+		CMAKE_C_FLAGS_DEBUG "${c_flags_debug}"
+		CACHE STRING "c flags debug" FORCE
+	)
+	SET(
+		CMAKE_C_FLAGS_RELEASE "${c_flags_release}"
+		CACHE STRING "c flags release" FORCE
+	)
+ENDIF()
+SET(CONFIGURED_ONCE TRUE CACHE INTERNAL "configured once")

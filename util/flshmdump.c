@@ -3,7 +3,7 @@
 
 #include <flshm.h>
 
-#include "inc/hexdump.h"
+#include <hexdump.h>
 
 int main(int argc, char ** argv) {
 

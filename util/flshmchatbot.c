@@ -8,7 +8,7 @@
 
 #include <flshm.h>
 
-#include "inc/hexdump.h"
+#include <hexdump.h>
 
 uint32_t amf0_read_string(char ** str, char * p, uint32_t max) {
 
