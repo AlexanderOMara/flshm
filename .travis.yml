@@ -126,16 +126,6 @@ matrix:
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-6.0
-          packages:
-            - clang-6.0
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
-
 before_install:
   - eval "${MATRIX_EVAL}"
 
