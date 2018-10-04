@@ -45,22 +45,18 @@ init:
 build_script:
   - cmake --version
   - echo "%cmakegen%"
-  - if %platform%==vs (
-      mkdir build
-      cd build
-      cmake .. -G "%cmakegen%"
-      msbuild /p:Platform=%arch% /p:Configuration=Debug "ALL_BUILD.vcxproj"
-      msbuild /p:Platform=%arch% /p:Configuration=Release "ALL_BUILD.vcxproj"
-    )
-  - if %platform%==mingw32 (
-      mkdir build-debug
-      pushd build-debug
-      cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
-      mingw32 mingw32-make
-      popd
-      mkdir build-release
-      pushd build-release
-      cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
-      mingw32 mingw32-make
-      popd
-    )
+  - if %platform%==vs mkdir build
+  - if %platform%==vs cd build
+  - if %platform%==vs cmake .. -G "%cmakegen%"
+  - if %platform%==vs msbuild /p:Platform=%arch% /p:Configuration=Debug "ALL_BUILD.vcxproj"
+  - if %platform%==vs msbuild /p:Platform=%arch% /p:Configuration=Release "ALL_BUILD.vcxproj"
+  - if %platform%==mingw32 mkdir build-debug
+  - if %platform%==mingw32 pushd build-debug
+  - if %platform%==mingw32 cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
+  - if %platform%==mingw32 mingw32 mingw32-make
+  - if %platform%==mingw32 popd
+  - if %platform%==mingw32 mkdir build-release
+  - if %platform%==mingw32 pushd build-release
+  - if %platform%==mingw32 cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
+  - if %platform%==mingw32 mingw32 mingw32-make
+  - if %platform%==mingw32 popd
