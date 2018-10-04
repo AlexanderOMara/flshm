@@ -165,7 +165,13 @@ before_install:
   - eval "${MATRIX_EVAL}"
 
 script:
-  - mkdir build
-  - cd build
+  - mkdir build-debug
+  - pushd build-debug
   - cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
   - make
+  - popd
+  - mkdir build-release
+  - pushd build-release
+  - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
+  - make
+  - popd
