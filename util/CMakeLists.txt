@@ -23,7 +23,7 @@ FOREACH(util ${utils})
 
 	TARGET_INCLUDE_DIRECTORIES(${util_name} PRIVATE "../src" "./shared")
 
-	TARGET_LINK_LIBRARIES(${util_name} flshm hexdump)
+	TARGET_LINK_LIBRARIES(${util_name} flshm hexdump sleep)
 
 	SET_TARGET_PROPERTIES(${util_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTBIN})
 ENDFOREACH()

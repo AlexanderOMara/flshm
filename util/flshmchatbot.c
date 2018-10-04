@@ -8,6 +8,7 @@
 #include <flshm.h>
 
 #include <hexdump.h>
+#include <sleep.h>
 
 uint32_t amf0_read_string(char ** str, char * p, uint32_t max) {
 
@@ -303,11 +304,7 @@ int main(int argc, char ** argv) {
 		flshm_unlock(info);
 		locked = false;
 
-		struct timespec tim;
-		struct timespec tim2;
-		tim.tv_sec = 0;
-		tim.tv_nsec = 10000000L;
-		nanosleep(&tim, &tim2);
+		sleep_ms(1000);
 	}
 
 	flshm_close(info);
