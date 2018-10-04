@@ -28,5 +28,4 @@ before_build:
 
 build:
   project: build\flshm.sln
-  verbosity: minimal
   parallel: true
