@@ -15,3 +15,8 @@ before_build:
     cd build
     cmake --version
     cmake .. -G "Visual Studio 15 2017"
+
+build:
+  project: build\flshm.sln
+  verbosity: minimal
+  parallel: true
