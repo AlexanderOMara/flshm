@@ -13,37 +13,19 @@ environment:
 
 configuration: Release
 
-#   image:
-#   - Visual Studio 2017
-# configuration:
-#   - Debug
-#   - Release
-# platform:
-#   - x86
-#   - x64
-# environment:
-#   matrix:
-#     - arch: Win64
-
 init:
   - echo %platform%
   - echo %vsversion%
   - echo %arch%
-  # - echo %arch%
-  # - set garch=
-  # - if "%arch%"=="x64" ( set garch= Win64)
-  # - echo %garch%
-  # - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-  # - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set generator="Visual Studio 15 2017%garch%" )
-  # - echo %generator%
-  - if %platform%==vs ( set "makecommand=Visual Studio" )
-  - if %vsversion%==2017 ( set "makecommand=%makecommand% 15 %vsversion%" )
-  - if %arch%==x64 ( set "makecommand=%makecommand% Win64" )
+  - if %platform%==vs ( set "makegen=Visual Studio" )
+  - if %vsversion%==2017 ( set "makegen=%makegen% 15 %vsversion%" )
+  - if %arch%==x64 ( set "makegen=%makegen% Win64" )
 
 before_build:
-  - echo %makecommand%
-  # - if %platform%==vs cmake -G "%makecommand%"
+  - mkdir build
+  - cd build
+  - cmake --version
+  - cmake .. -G %makegen%
 
 build:
-  project: build\flshm.sln
-  parallel: true
+  - msbuild /p:Platform=%arch% "ALL_BUILD.vcxproj"
