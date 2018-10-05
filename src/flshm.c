@@ -284,15 +284,9 @@ uint32_t flshm_tick() {
 }
 
 
-flshm_keys * flshm_keys_create() {
-	return malloc(sizeof(flshm_keys));
-}
+flshm_keys * flshm_keys_create(bool is_per_user) {
+	flshm_keys * keys = malloc(sizeof(flshm_keys));
 
-void flshm_keys_destroy(flshm_keys * keys) {
-	free(keys);
-}
-
-void flshm_keys_init(flshm_keys * keys, bool is_per_user) {
 	#ifdef _WIN32
 		// Not used.
 		(void)is_per_user;
@@ -322,6 +316,12 @@ void flshm_keys_init(flshm_keys * keys, bool is_per_user) {
 		keys.sem = key;
 		keys.shm = key;
 	#endif
+
+	return keys;
+}
+
+void flshm_keys_destroy(flshm_keys * keys) {
+	free(keys);
 }
 
 

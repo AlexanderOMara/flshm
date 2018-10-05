@@ -96,8 +96,7 @@ int main(int argc, char ** argv) {
 	message->size = size;
 	message->data = data;
 
-	flshm_keys * keys = flshm_keys_create();
-	flshm_keys_init(keys, false);
+	flshm_keys * keys = flshm_keys_create(false);
 	flshm_info * info = flshm_open(keys);
 
 	if (!info) {

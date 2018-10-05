@@ -9,8 +9,7 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 
-	flshm_keys * keys = flshm_keys_create();
-	flshm_keys_init(keys, false);
+	flshm_keys * keys = flshm_keys_create(false);
 	flshm_info * info = flshm_open(keys);
 
 	if (!info) {

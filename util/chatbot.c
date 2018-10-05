@@ -120,8 +120,7 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	keys = flshm_keys_create();
-	flshm_keys_init(keys, is_per_user);
+	keys = flshm_keys_create(is_per_user);
 	info = flshm_open(keys);
 	if (!info) {
 		printf("FAILED: flshm_open\n");
