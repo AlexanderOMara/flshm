@@ -50,8 +50,12 @@ uint32_t flshm_amf0_read_string(char ** str, char * p, uint32_t max) {
 		return false;
 	}
 
+	// If null pointer, allocate memory first.
+	if (!*str) {
+		*str = malloc(sl + 1);
+	}
+
 	// Copy string to memory, null terminate.
-	*str = malloc(sl + 1);
 	memcpy(*str, p, sl);
 	(*str)[sl] = '\0';
 
