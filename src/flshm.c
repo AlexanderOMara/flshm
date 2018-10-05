@@ -286,6 +286,7 @@ flshm_keys flshm_get_keys(bool is_per_user) {
 	flshm_keys keys;
 
 	#ifdef _WIN32
+		// Not used.
 		(void)is_per_user;
 
 		// Copy keys.
@@ -305,6 +306,7 @@ flshm_keys flshm_get_keys(bool is_per_user) {
 			keys.shm = (key_t)0x53414E44; // SAND
 		}
 	#else
+		// Not used.
 		(void)is_per_user;
 
 		// Generate key.
