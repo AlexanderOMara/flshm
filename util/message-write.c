@@ -21,7 +21,6 @@ char * hex_to_bin(char * hex, size_t * len) {
 }
 
 int main(int argc, char ** argv) {
-
 	char usage[] =
 		"%s "
 		"tick "

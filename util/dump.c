@@ -6,7 +6,6 @@
 #include <hexdump.h>
 
 int main(int argc, char ** argv) {
-
 	// Optionally skip null rows in the hex dump.
 	int skipNull = argc > 1 ? (argv[1][0] == '1') : 0;
 

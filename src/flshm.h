@@ -111,27 +111,19 @@ typedef enum flshm_amf {
 
 /**
  * The keys used to open the semaphore and shared memory.
- * Keys are plarform specific.
+ * Keys are platform specific.
  */
 typedef struct flshm_keys {
-
-#ifdef _WIN32
-
-	char sem[24];
-	char shm[24];
-
-#elif __APPLE__
-
-	char sem[24];
-	key_t shm;
-
-#else
-
-	key_t sem;
-	key_t shm;
-
-#endif
-
+	#ifdef _WIN32
+		char sem[24];
+		char shm[24];
+	#elif __APPLE__
+		char sem[24];
+		key_t shm;
+	#else
+		key_t sem;
+		key_t shm;
+	#endif
 } flshm_keys;
 
 
@@ -145,26 +137,19 @@ typedef struct flshm_info {
 	 */
 	void * data;
 
-#ifdef _WIN32
-
-	HANDLE sem;
-	HANDLE shm;
-	LPVOID shmaddr;
-
-#elif __APPLE__
-
-	sem_t * semdesc;
-	int shmid;
-	void * shmaddr;
-
-#else
-
-	int semid;
-	int shmid;
-	void * shmaddr;
-
-#endif
-
+	#ifdef _WIN32
+		HANDLE sem;
+		HANDLE shm;
+		LPVOID shmaddr;
+	#elif __APPLE__
+		sem_t * semdesc;
+		int shmid;
+		void * shmaddr;
+	#else
+		int semid;
+		int shmid;
+		void * shmaddr;
+	#endif
 } flshm_info;
 
 
@@ -176,10 +161,12 @@ typedef struct flshm_connection {
 	 * Connection name.
 	 */
 	const char * name;
+
 	/**
 	 * Version (FP7+).
 	 */
 	flshm_version version;
+
 	/**
 	 * Sandbox (FP9+).
 	 */
@@ -195,6 +182,7 @@ typedef struct flshm_connected {
 	 * The array of connection.
 	 */
 	flshm_connection connections[FLSHM_CONNECTIONS_MAX_COUNT];
+
 	/**
 	 * The number of connections listed in the array.
 	 */
@@ -210,53 +198,63 @@ typedef struct flshm_message {
 	 * The tick timestamp for the message.
 	 */
 	uint32_t tick;
+
 	/**
 	 * The length of all of the AMF data.
 	 */
 	uint32_t amfl;
+
 	/**
 	 * The sending connection name.
 	 */
 	char * name;
+
 	/**
 	 * The sending conneciton host.
 	 */
 	char * host;
+
 	/**
 	 * What version the message format is.
 	 * Defines what properties are set, as properties vary by version.
 	 */
 	flshm_version version;
+
 	/**
 	 * A flag for if sandboxed (SWF7 or higher, not SWf6).
 	 * FLSHM_VERSION_2+
 	 * FP7+
 	 */
 	bool sandboxed;
+
 	/**
 	 * A flag for if sending origin is using HTTPS.
 	 * FLSHM_VERSION_2+
 	 * FP7+
 	 */
 	bool https;
+
 	/**
 	 * The sender security sandbox.
 	 * FLSHM_VERSION_3+
 	 * FP8+
 	 */
 	flshm_security sandbox;
+
 	/**
 	 * The sender SWF version.
 	 * FLSHM_VERSION_3+
 	 * FP8+
 	 */
 	uint32_t swfv;
+
 	/**
 	 * The filepath of the sender for local-with-file sandbox.
 	 * FLSHM_VERSION_3+
 	 * FP8+ and sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE
 	 */
 	char * filepath;
+
 	/**
 	 * The AMF version the message data is encoded with.
 	 * FLSHM_VERSION_4+
@@ -265,14 +263,17 @@ typedef struct flshm_message {
 	 * FLSHM_AMF3 = AMF3 (Arguments are encoded in order.)
 	 */
 	flshm_amf amfv;
+
 	/**
 	 * The method name to be called in by the reciever.
 	 */
 	char * method;
+
 	/**
 	 * The size of the message arguments data.
 	 */
 	uint32_t size;
+
 	/**
 	 * The message data for the arguments, encoded in AMF format in amfv.
 	 */

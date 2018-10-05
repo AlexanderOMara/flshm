@@ -4,7 +4,6 @@
 #include <flshm.h>
 
 int main(int argc, char ** argv) {
-
 	if (argc < 4) {
 		printf("%s name version sandbox\n", argv[0]);
 		return EXIT_FAILURE;

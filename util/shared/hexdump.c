@@ -10,6 +10,7 @@ void hexdump(void * addr, unsigned int size, unsigned int col, int skipnull) {
 	unsigned int i = 0;
 	int nonnull = 0;
 	int skippingnull = 0;
+
 	for (; i < size; ++i) {
 		unsigned int ci = i % col;
 		unsigned int hci = ci ? (ci * 3 - 1) : 0;
@@ -29,21 +30,27 @@ void hexdump(void * addr, unsigned int size, unsigned int col, int skipnull) {
 			}
 			sprintf((char *)offset, "%04X", i);
 		}
+
 		// Add hex to the hex column.
 		sprintf((char *)(hex + hci), hci ? " %02X" : "%02X", bytes[i]);
+
 		// Add character to the ASCII column.
 		unsigned char c = bytes[i];
 		ascii[ci] = c > 31 && c < 127 ? c : '.';
 		ascii[ci + 1] = '\0';
+
 		// Mark the row as non-null, if the byte is non-null.
 		nonnull = c ? 1 : nonnull;
 	}
+
 	// Fill the hex column with spaces if not already aligned.
 	for (; i % col; ++i) {
 		sprintf((char *)(hex + ((i % col) * 3 - 1)), "   ");
 	}
+
 	// Output the last line.
 	printf(format, offset, hex, ascii);
+
 	// Free memory.
 	free(ascii);
 	free(hex);

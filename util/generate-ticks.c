@@ -5,7 +5,6 @@
 #include <flshm.h>
 
 int main() {
-
 	// Read the current tick.
 	uint32_t last_tick = 0;
 

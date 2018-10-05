@@ -11,7 +11,6 @@
 #include <sleep.h>
 
 uint32_t amf0_read_string(char ** str, char * p, uint32_t max) {
-
 	// Bounds check the header.
 	if (max < 3) {
 		return false;
@@ -47,7 +46,6 @@ uint32_t amf0_read_string(char ** str, char * p, uint32_t max) {
 }
 
 uint32_t amf0_write_string(char * str, char * p, uint32_t max) {
-
 	// Get string length and bounds check.
 	size_t l = strlen(str);
 	uint32_t size = (uint32_t)(l + 3);
@@ -136,7 +134,6 @@ static void onshutdown(int signo) {
 }
 
 int main(int argc, char ** argv) {
-
 	if (argc < 3) {
 		printf(
 			"%s "
@@ -208,10 +205,8 @@ int main(int argc, char ** argv) {
 		// Read message if present.
 		flshm_message * message = flshm_message_read(info);
 		if (message) {
-
 			// Check that this message is intended for this.
 			if (!strcmp(connection_name_self, message->name)) {
-
 				// Clear the message from the memory.
 				flshm_message_clear(info);
 
@@ -223,7 +218,6 @@ int main(int argc, char ** argv) {
 				// Read the data as AMF0 string if possible.
 				char * msgstr = NULL;
 				if (amf0_read_string(&msgstr, message->data, message->size)) {
-
 					// Print the parsed string.
 					printf("Received: %s\n", msgstr);
 
@@ -242,7 +236,6 @@ int main(int argc, char ** argv) {
 					char * data = malloc(max);
 					uint32_t size = amf0_write_string(msgstr, data, max);
 					if (size) {
-
 						// Create a new filepath from the existing one.
 						char * filepath = NULL;
 						if (message->filepath) {

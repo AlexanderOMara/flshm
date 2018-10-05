@@ -6,7 +6,6 @@
 #include <hexdump.h>
 
 int main() {
-
 	flshm_info * info = flshm_open(false);
 
 	if (!info) {
