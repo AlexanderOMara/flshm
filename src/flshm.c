@@ -1027,19 +1027,28 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		return false;
 	}
 	// Validate host is set and valid.
-	if (!message->host || strlen(message->host) > FLSHM_AMF0_STRING_MAX_LENGTH) {
+	if (
+		!message->host ||
+		strlen(message->host) > FLSHM_AMF0_STRING_MAX_LENGTH
+	) {
 		return false;
 	}
 	// If local-with-file sandbox, ensure filepath is set and valid.
 	if (
 		message->version >= FLSHM_VERSION_3 &&
 		message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE &&
-		(!message->filepath || strlen(message->filepath) > FLSHM_AMF0_STRING_MAX_LENGTH)
+		(
+			!message->filepath ||
+			strlen(message->filepath) > FLSHM_AMF0_STRING_MAX_LENGTH
+		)
 	) {
 		return false;
 	}
 	// Validate method is set and valid.
-	if (!message->method || strlen(message->method) > FLSHM_AMF0_STRING_MAX_LENGTH) {
+	if (
+		!message->method ||
+		strlen(message->method) > FLSHM_AMF0_STRING_MAX_LENGTH
+	) {
 		return false;
 	}
 
