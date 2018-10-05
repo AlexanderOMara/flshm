@@ -69,6 +69,11 @@
  */
 #define FLSHM_AMF0_STRING_MAX_LENGTH 0xFFFF
 
+/**
+ * Maximum length of a keys string if used.
+ */
+#define FLSHM_KEYS_STRING_MAX_LENGTH 24
+
 
 
 
@@ -121,10 +126,10 @@ typedef enum flshm_amf {
  */
 typedef struct flshm_keys {
 	#ifdef _WIN32
-		char sem[24];
-		char shm[24];
+		char sem[FLSHM_KEYS_STRING_MAX_LENGTH];
+		char shm[FLSHM_KEYS_STRING_MAX_LENGTH];
 	#elif __APPLE__
-		char sem[24];
+		char sem[FLSHM_KEYS_STRING_MAX_LENGTH];
 		key_t shm;
 	#else
 		key_t sem;
