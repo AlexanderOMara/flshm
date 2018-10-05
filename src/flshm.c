@@ -850,101 +850,101 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// Start a block that can be broken from, assume failure on break.
 	for (;;) {
 		// Read the connection name, or fail.
-		read = flshm_amf0_read_string(
+		re = flshm_amf0_read_string(
 			&name,
 			shmdata + i,
 			max - i
 		);
-		if (!read) {
+		if (!re) {
 			break;
 		}
-		i += read;
+		i += re;
 
 		// Read the host name, or fail.
-		read = flshm_amf0_read_string(
+		re = flshm_amf0_read_string(
 			&host,
 			shmdata + i,
 			max - i
 		);
-		if (!read) {
+		if (!re) {
 			break;
 		}
-		i += read;
+		i += re;
 
 		// Read the optional data, if present, based on first boolean.
 
 		// Read version 2 data if present.
-		read = flshm_amf0_read_boolean(
+		re = flshm_amf0_read_boolean(
 			&sandboxed,
 			shmdata + i,
 			max - i
 		);
-		if (read) {
+		if (re) {
 			// Read sandboxed successfully.
-			i += read;
+			i += re;
 
 			// We have version 2 at least, read data.
 			version = FLSHM_VERSION_2;
 
 			// Read HTTPS or fail.
-			read = flshm_amf0_read_boolean(
+			re = flshm_amf0_read_boolean(
 				&https,
 				shmdata + i,
 				max - i
 			);
-			if (!read) {
+			if (!re) {
 				break;
 			}
-			i += read;
+			i += re;
 
 			// Read version 3 data if present, based on first double.
-			read = flshm_amf0_read_double(
+			re = flshm_amf0_read_double(
 				&d2i,
 				shmdata + i,
 				max - i
 			);
-			if (read) {
+			if (re) {
 				// Read sandbox successfully.
 				sandbox = (int32_t)d2i;
-				i += read;
+				i += re;
 
 				// We have version 3 at least, read data.
 				version = FLSHM_VERSION_3;
 
 				// Read version or fail.
-				read = flshm_amf0_read_double(
+				re = flshm_amf0_read_double(
 					&d2i,
 					shmdata + i,
 					max - i
 				);
-				if (!read) {
+				if (!re) {
 					break;
 				}
 				swfv = (uint32_t)d2i;
-				i += read;
+				i += re;
 
 				// If sandbox local-with-file, includes sender filepath.
 				if (sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE) {
-					read = flshm_amf0_read_string(
+					re = flshm_amf0_read_string(
 						&filepath,
 						shmdata + i,
 						max - i
 					);
-					if (!read) {
+					if (!re) {
 						break;
 					}
-					i += read;
+					i += re;
 				}
 
 				// Read AMF version if present, else ignore.
-				read = flshm_amf0_read_double(
+				re = flshm_amf0_read_double(
 					&d2i,
 					shmdata + i,
 					max - i
 				);
-				if (read) {
+				if (re) {
 					amfv = (uint32_t)d2i;
-					i += read;
+					i += re;
 
 					// Version must be 4.
 					version = FLSHM_VERSION_4;
@@ -953,15 +953,15 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		}
 
 		// Read the method name or fail.
-		read = flshm_amf0_read_string(
+		re = flshm_amf0_read_string(
 			&method,
 			shmdata + i,
 			max - i
 		);
-		if (!read) {
+		if (!re) {
 			break;
 		}
-		i += read;
+		i += re;
 
 		// Calculate the size of the message, and copy to memory.
 		size = max - i;
@@ -1043,120 +1043,120 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		// Keep track of offset and bounds.
 		uint32_t i = 0;
 		uint32_t max = FLSHM_MESSAGE_MAX_SIZE;
-		uint32_t wrote;
+		uint32_t wr;
 
 		// Write the connection name or fail.
-		wrote = flshm_amf0_write_string(
+		wr = flshm_amf0_write_string(
 			message->name,
 			buffer + i,
 			max - i
 		);
-		if (!wrote) {
+		if (!wr) {
 			break;
 		}
-		i += wrote;
+		i += wr;
 
 		// Write the connection host or fail.
-		wrote = flshm_amf0_write_string(
+		wr = flshm_amf0_write_string(
 			message->host,
 			buffer + i,
 			max - i
 		);
-		if (!wrote) {
+		if (!wr) {
 			break;
 		}
-		i += wrote;
+		i += wr;
 
 		// Add version 2 data if specified.
 		if (message->version >= FLSHM_VERSION_2) {
 			// Write sandboxed or fail.
-			wrote = flshm_amf0_write_boolean(
+			wr = flshm_amf0_write_boolean(
 				message->sandboxed,
 				buffer + i,
 				max - i
 			);
-			if (!wrote) {
+			if (!wr) {
 				break;
 			}
-			i += wrote;
+			i += wr;
 
 			// Write HTTPS or fail.
-			wrote = flshm_amf0_write_boolean(
+			wr = flshm_amf0_write_boolean(
 				message->https,
 				buffer + i,
 				max - i
 			);
-			if (!wrote) {
+			if (!wr) {
 				break;
 			}
-			i += wrote;
+			i += wr;
 
 			// Add version 3 data if specified.
 			if (message->version >= FLSHM_VERSION_3) {
 				// Write sandbox or fail.
-				wrote = flshm_amf0_write_double(
+				wr = flshm_amf0_write_double(
 					(double)message->sandbox,
 					buffer + i,
 					max - i
 				);
-				if (!wrote) {
+				if (!wr) {
 					break;
 				}
-				i += wrote;
+				i += wr;
 
 				// Write version or fail.
-				wrote = flshm_amf0_write_double(
+				wr = flshm_amf0_write_double(
 					(double)message->swfv,
 					buffer + i,
 					max - i
 				);
-				if (!wrote) {
+				if (!wr) {
 					break;
 				}
-				i += wrote;
+				i += wr;
 
 				// Write filepath if local-with-file or fail.
 				if (
 					message->sandboxed &&
 					message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE
 				) {
-					wrote = flshm_amf0_write_string(
+					wr = flshm_amf0_write_string(
 						message->filepath,
 						buffer + i,
 						max - i
 					);
-					if (!wrote) {
+					if (!wr) {
 						break;
 					}
-					i += wrote;
+					i += wr;
 				}
 
 				// Add version 4 data if specified.
 				if (message->version >= FLSHM_VERSION_4) {
 					// Write the AMF version or fail.
-					wrote = flshm_amf0_write_double(
+					wr = flshm_amf0_write_double(
 						(double)message->amfv,
 						buffer + i,
 						max - i
 					);
-					if (!wrote) {
+					if (!wr) {
 						break;
 					}
-					i += wrote;
+					i += wr;
 				}
 			}
 		}
 
 		// Write method or fail.
-		wrote = flshm_amf0_write_string(
+		wr = flshm_amf0_write_string(
 			message->method,
 			buffer + i,
 			max - i
 		);
-		if (!wrote) {
+		if (!wr) {
 			break;
 		}
-		i += wrote;
+		i += wr;
 
 		// Check that message data will fit.
 		if (message->size > max - i) {
