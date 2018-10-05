@@ -394,6 +394,12 @@ uint32_t flshm_message_tick(flshm_info * info);
 
 
 /**
+ * Create a message object.
+ */
+flshm_message * flshm_message_create();
+
+
+/**
  * Free the memory returned from flshm_message_read.
  */
 void flshm_message_free(flshm_message * message);

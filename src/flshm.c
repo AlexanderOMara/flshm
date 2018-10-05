@@ -791,6 +791,26 @@ uint32_t flshm_message_tick(flshm_info * info) {
 }
 
 
+flshm_message * flshm_message_create() {
+	flshm_message * r = malloc(sizeof(flshm_message));
+	r->tick = 0;
+	r->amfl = 0;
+	r->name = NULL;
+	r->host = NULL;
+	r->version = FLSHM_VERSION_1;
+	r->sandboxed = false;
+	r->https = false;
+	r->sandbox = FLSHM_SECURITY_NONE;
+	r->swfv = 0;
+	r->filepath = NULL;
+	r->amfv = FLSHM_AMF0;
+	r->method = NULL;
+	r->size = 0;
+	r->data = NULL;
+	return r;
+}
+
+
 void flshm_message_free(flshm_message * message) {
 	// Free any and all memory associated with the message structure.
 	if (message->name) {
@@ -823,7 +843,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	flshm_version version = FLSHM_VERSION_1;
 	bool sandboxed = false;
 	bool https = false;
-	flshm_security sandbox = 0;
+	flshm_security sandbox = FLSHM_SECURITY_NONE;
 	uint32_t swfv = 0;
 	char * filepath = NULL;
 	flshm_amf amfv = FLSHM_AMF0;
