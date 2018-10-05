@@ -53,6 +53,7 @@ build_script:
   - if %platform%==mingw32 mkdir build-debug
   - if %platform%==mingw32 pushd build-debug
   - if %platform%==mingw32 cmake -DCMAKE_SH="CMAKE_SH-NOTFOUND" -DCMAKE_BUILD_TYPE=Debug -G "%cmakegen%" ..
+  - if %platform%==mingw32 dir
   - if %platform%==mingw32 mingw32-make
   - if %platform%==mingw32 popd
   - if %platform%==mingw32 mkdir build-release
