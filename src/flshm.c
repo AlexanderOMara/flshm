@@ -91,39 +91,23 @@ uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max) {
 	}
 	p++;
 
-	// Detect the host endianness via union.
-	union {
-		uint16_t i;
-		uint8_t c[2];
-	} which;
-	which.i = 1;
-	bool le = which.c[0] ? true : false;
-
-	// Convert type by union.
+	// Read big endian double into native via union.
 	union {
 		double d;
-		char c[8];
-	} data;
-	data.d = 0;
-
-	// Read backwards if host is little-endian, else read it forward.
-	if (le) {
-		char * p2 = p + 8;
-		for (uint8_t i = 0; i < 8; i++) {
-			p2--;
-			data.c[i] = *(p2);
-		}
-	}
-	else {
-		char * p2 = p;
-		for (uint8_t i = 0; i < 8; i++) {
-			data.c[i] = *(p2);
-			p2++;
-		}
-	}
+		uint64_t i;
+	} u;
+	u.i = 0;
+	u.i |= (((uint64_t)p[0]) & 0xFF) << 56;
+	u.i |= (((uint64_t)p[1]) & 0xFF) << 48;
+	u.i |= (((uint64_t)p[2]) & 0xFF) << 40;
+	u.i |= (((uint64_t)p[3]) & 0xFF) << 32;
+	u.i |= (((uint64_t)p[4]) & 0xFF) << 24;
+	u.i |= (((uint64_t)p[5]) & 0xFF) << 16;
+	u.i |= (((uint64_t)p[6]) & 0xFF) << 8;
+	u.i |= (((uint64_t)p[7]) & 0xFF);
 
 	// Set the double variable.
-	*number = data.d;
+	*number = u.d;
 
 	return 9;
 }
@@ -181,38 +165,20 @@ uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
 	*p = '\x00';
 	p++;
 
-	// Detect the host endianness via union.
-	union {
-		uint16_t i;
-		uint8_t c[2];
-	} which;
-	which.i = 1;
-	bool le = which.c[0] ? true : false;
-
-	// Convert type by union.
+	// Write big endian double from native via union.
 	union {
 		double d;
-		char c[8];
-	} data;
-
-	// Set double.
-	data.d = number;
-
-	// Write backwards if host is little-endian, else write it forward.
-	if (le) {
-		char * p2 = p + 8;
-		for (uint8_t i = 0; i < 8; i++) {
-			p2--;
-			*(p2) = data.c[i];
-		}
-	}
-	else {
-		char * p2 = p;
-		for (uint8_t i = 0; i < 8; i++) {
-			*(p2) = data.c[i];
-			p2++;
-		}
-	}
+		uint64_t i;
+	} u;
+	u.d = number;
+	p[0] = (char)(u.i >> 56);
+	p[1] = (char)(u.i >> 48);
+	p[2] = (char)(u.i >> 40);
+	p[3] = (char)(u.i >> 32);
+	p[4] = (char)(u.i >> 24);
+	p[5] = (char)(u.i >> 16);
+	p[6] = (char)(u.i >> 8);
+	p[7] = (char)(u.i);
 
 	return 9;
 }
