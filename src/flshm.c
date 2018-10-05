@@ -324,13 +324,13 @@ flshm_info * flshm_open(flshm_keys * keys) {
 
 	#ifdef _WIN32
 		// First try to open the semaphore.
-		HANDLE sem = OpenMutex(MUTEX_ALL_ACCESS, FALSE, keys.sem);
+		HANDLE sem = OpenMutex(MUTEX_ALL_ACCESS, FALSE, keys->sem);
 		if (sem == NULL) {
 			return NULL;
 		}
 
 		// Next try to open the shared memory.
-		HANDLE shm = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, keys.shm);
+		HANDLE shm = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, keys->shm);
 		if (shm == NULL) {
 			CloseHandle(sem);
 			return NULL;
@@ -366,13 +366,13 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		info->shmaddr = shmaddr;
 	#elif __APPLE__
 		// First try to open the semaphore.
-		sem_t * semdesc = sem_open(keys.sem, 0);
+		sem_t * semdesc = sem_open(keys->sem, 0);
 		if (semdesc == SEM_FAILED) {
 			return NULL;
 		}
 
 		// Next try to open the shared memory.
-		int shmid = shmget(keys.shm, FLSHM_SIZE, 0);
+		int shmid = shmget(keys->shm, FLSHM_SIZE, 0);
 		if (shmid == -1) {
 			sem_close(semdesc);
 			return NULL;
@@ -402,13 +402,13 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		info->shmaddr = shmaddr;
 	#else
 		// First try to open the semaphore.
-		int semid = semget(keys.sem, 1, 0);
+		int semid = semget(keys->sem, 1, 0);
 		if (semid == -1) {
 			return NULL;
 		}
 
 		// Next try to open the shared memory.
-		int shmid = shmget(keys.shm, FLSHM_SIZE, 0);
+		int shmid = shmget(keys->shm, FLSHM_SIZE, 0);
 		if (shmid == -1) {
 			return NULL;
 		}
@@ -848,7 +848,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// Keep track of position and bounds.
 	uint32_t i = FLSHM_MESSAGE_BODY_OFFSET;
 	uint32_t max = FLSHM_MESSAGE_BODY_OFFSET + amfl;
-	uint32_t read;
+	uint32_t re;
 
 	// Start a block that can be broken from, assume failure on break.
 	for (;;) {
