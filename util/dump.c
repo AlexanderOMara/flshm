@@ -10,7 +10,8 @@ int main(int argc, char ** argv) {
 	int skipNull = argc > 1 ? (argv[1][0] == '1') : 0;
 
 	// Open the shared memory.
-	flshm_info * info = flshm_open(false);
+	flshm_keys keys = flshm_get_keys(false);
+	flshm_info * info = flshm_open(&keys);
 
 	// Check if opened successfully.
 	if (!info) {

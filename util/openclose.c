@@ -7,7 +7,8 @@
 int main(int argc, char ** argv) {
 	bool locking = argc < 2 ? false : argv[1][0] == '1';
 
-	flshm_info * info = flshm_open(false);
+	flshm_keys keys = flshm_get_keys(false);
+	flshm_info * info = flshm_open(&keys);
 
 	if (!info) {
 		printf("FAILED: flshm_open\n");

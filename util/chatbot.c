@@ -116,7 +116,8 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	info = flshm_open(is_per_user);
+	flshm_keys keys = flshm_get_keys(is_per_user);
+	flshm_info * info = flshm_open(&keys);
 	if (!info) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;

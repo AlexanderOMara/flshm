@@ -4,7 +4,8 @@
 #include <flshm.h>
 
 int main() {
-	flshm_info * info = flshm_open(false);
+	flshm_keys keys = flshm_get_keys(false);
+	flshm_info * info = flshm_open(&keys);
 
 	if (!info) {
 		printf("FAILED: flshm_open\n");
