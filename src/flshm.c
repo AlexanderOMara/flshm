@@ -367,7 +367,13 @@ flshm_info * flshm_open(bool is_per_user) {
 		}
 
 		// Finally try to attach to the shared memory.
-		LPVOID shmaddr = MapViewOfFile(shm, FILE_MAP_ALL_ACCESS, 0, 0, FLSHM_SIZE);
+		LPVOID shmaddr = MapViewOfFile(
+			shm,
+			FILE_MAP_ALL_ACCESS,
+			0,
+			0,
+			FLSHM_SIZE
+		);
 		if (shmaddr == NULL) {
 			CloseHandle(shm);
 			CloseHandle(sem);
