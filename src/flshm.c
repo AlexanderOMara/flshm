@@ -228,8 +228,10 @@ uint32_t flshm_hash_uid(uint32_t uid) {
 
 bool flshm_shm_inited(void * shmdata) {
 	// Check for 2 uint32 flag in the head.
-	return *((uint32_t *)shmdata) == 1 &&
-		*((uint32_t *)((char *)shmdata + 4)) == 1;
+	return (
+		*((uint32_t *)shmdata) == 1 &&
+		*((uint32_t *)((char *)shmdata + 4)) == 1
+	);
 }
 
 
@@ -282,28 +284,34 @@ uint32_t flshm_tick() {
 }
 
 
-flshm_keys flshm_get_keys(bool is_per_user) {
-	flshm_keys keys;
+flshm_keys * flshm_keys_create() {
+	return malloc(sizeof(flshm_keys));
+}
 
+void flshm_keys_destroy(flshm_keys * keys) {
+	free(keys);
+}
+
+void flshm_keys_init(flshm_keys * keys, bool is_per_user) {
 	#ifdef _WIN32
 		// Not used.
 		(void)is_per_user;
 
 		// Copy keys.
-		strcpy(keys.sem, "MacromediaMutexOmega");
-		strcpy(keys.shm, "MacromediaFMOmega");
+		strcpy(keys->sem, "MacromediaMutexOmega");
+		strcpy(keys->shm, "MacromediaFMOmega");
 	#elif __APPLE__
 		// Check if user-specific keys for isPerUser, else user-shared.
 		if (is_per_user) {
 			// The isPerUser generated keys.
 			uint32_t shm = flshm_hash_uid(getuid());
-			snprintf(keys.sem, 20, "%u", shm);
-			keys.shm = (key_t)shm;
+			snprintf(keys->sem, 20, "%u", shm);
+			keys->shm = (key_t)shm;
 		}
 		else {
 			// The default user-shared keys.
-			strcpy(keys.sem, "MacromediaSemaphoreDig");
-			keys.shm = (key_t)0x53414E44; // SAND
+			strcpy(keys->sem, "MacromediaSemaphoreDig");
+			keys->shm = (key_t)0x53414E44; // SAND
 		}
 	#else
 		// Not used.
@@ -314,8 +322,6 @@ flshm_keys flshm_get_keys(bool is_per_user) {
 		keys.sem = key;
 		keys.shm = key;
 	#endif
-
-	return keys;
 }
 
 

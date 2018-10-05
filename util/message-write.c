@@ -96,8 +96,9 @@ int main(int argc, char ** argv) {
 	message->size = size;
 	message->data = data;
 
-	flshm_keys keys = flshm_get_keys(false);
-	flshm_info * info = flshm_open(&keys);
+	flshm_keys * keys = flshm_keys_create();
+	flshm_keys_init(keys, false);
+	flshm_info * info = flshm_open(keys);
 
 	if (!info) {
 		printf("FAILED: flshm_open\n");
@@ -117,7 +118,11 @@ int main(int argc, char ** argv) {
 	// Unlock memory.
 	flshm_unlock(info);
 
+	// Close info.
 	flshm_close(info);
+
+	// Cleanup memory.
+	flshm_keys_destroy(keys);
 
 	return ret;
 }

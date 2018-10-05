@@ -315,11 +315,24 @@ uint32_t flshm_tick();
 
 
 /**
- * Get the keys to open a connection with.
+ * Create keys.
+ */
+flshm_keys * flshm_keys_create();
+
+
+/**
+ * Destroy keys.
+ * @param keys [description]
+ */
+void flshm_keys_destroy(flshm_keys * keys);
+
+
+/**
+ * Init the keys to open a connection with.
  * is_per_user has same functionality of the ASVM isPerUser.
  * Should be set to match the ASVM targeted.
  */
-flshm_keys flshm_get_keys(bool is_per_user);
+void flshm_keys_init(flshm_keys * keys, bool is_per_user);
 
 
 /**

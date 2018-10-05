@@ -56,6 +56,7 @@ void strinv(char * s) {
 	}
 }
 
+static flshm_keys * keys = NULL;
 static flshm_info * info = NULL;
 static flshm_connection connection = { NULL, 0, 0 };
 static bool locked = false;
@@ -69,6 +70,9 @@ static void onshutdown(int signo) {
 		}
 		flshm_unlock(info);
 		flshm_close(info);
+	}
+	if (keys) {
+		flshm_keys_destroy(keys);
 	}
 	printf("Shutting down...\n");
 	exit(signo == SIGINT ? EXIT_SUCCESS : EXIT_FAILURE);
@@ -116,8 +120,9 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	flshm_keys keys = flshm_get_keys(is_per_user);
-	flshm_info * info = flshm_open(&keys);
+	flshm_keys * keys = flshm_keys_create();
+	flshm_keys_init(keys, is_per_user);
+	info = flshm_open(keys);
 	if (!info) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;
@@ -248,6 +253,7 @@ int main(int argc, char ** argv) {
 	}
 
 	flshm_close(info);
+	flshm_keys_destroy(keys);
 
 	return EXIT_SUCCESS;
 }
