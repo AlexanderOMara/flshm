@@ -10,65 +10,6 @@
 #include <hexdump.h>
 #include <sleep.h>
 
-uint32_t amf0_read_string(char ** str, char * p, uint32_t max) {
-	// Bounds check the header.
-	if (max < 3) {
-		return false;
-	}
-
-	// Check the type marker.
-	if (*p != '\x02') {
-		return false;
-	}
-	p++;
-
-	// Read the string length, big endian.
-	uint16_t sl =
-		((*((uint8_t *)p + 1)     ) & 0xFF  ) |
-		((*((uint8_t *)p    ) << 8) & 0xFF00);
-	p += 2;
-
-	// Compute total data size.
-	uint32_t size = sl + 3;
-
-	// Bounds check the length.
-	if (size > max) {
-		return false;
-	}
-
-	// Copy string to memory, null terminate.
-	*str = malloc(sl + 1);
-	memcpy(*str, p, sl);
-	(*str)[sl] = '\0';
-
-	// Return the amout of data read.
-	return size;
-}
-
-uint32_t amf0_write_string(char * str, char * p, uint32_t max) {
-	// Get string length and bounds check.
-	size_t l = strlen(str);
-	uint32_t size = (uint32_t)(l + 3);
-	if (l > 0xFFFF || size > max) {
-		return 0;
-	}
-	uint16_t sl = (uint16_t)l;
-
-	// Write the string marker.
-	*p = '\x02';
-	p++;
-
-	// Write the string size, big engian.
-	*((uint8_t *)p    ) = (sl >> 8) & 0xFF;
-	*((uint8_t *)p + 1) = (sl     ) & 0xFF;
-	p += 2;
-
-	// Copy the string without null byte.
-	memcpy(p, str, sl);
-
-	return size;
-}
-
 void dump_message(flshm_message * message) {
 	printf(
 		"Message:\n"
@@ -217,7 +158,11 @@ int main(int argc, char ** argv) {
 
 				// Read the data as AMF0 string if possible.
 				char * msgstr = NULL;
-				if (amf0_read_string(&msgstr, message->data, message->size)) {
+				if (flshm_amf0_read_string(
+					&msgstr,
+					message->data,
+					message->size
+				)) {
 					// Print the parsed string.
 					printf("Received: %s\n", msgstr);
 
@@ -234,7 +179,7 @@ int main(int argc, char ** argv) {
 					// Create a buffer for the data, and write to it.
 					uint32_t max = 3 + (uint32_t)strlen(msgstr);
 					char * data = malloc(max);
-					uint32_t size = amf0_write_string(msgstr, data, max);
+					uint32_t size = flshm_amf0_write_string(msgstr, data, max);
 					if (size) {
 						// Create a new filepath from the existing one.
 						char * filepath = NULL;
