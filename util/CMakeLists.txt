@@ -2,28 +2,29 @@ ADD_SUBDIRECTORY(shared)
 
 SET(
 	utils
-	flshmchatbot.c
-	flshmconnectionadd.c
-	flshmconnectionlist.c
-	flshmconnectionnamevalid.c
-	flshmconnectionremove.c
-	flshmdump.c
-	flshmmessageclear.c
-	flshmmessagegenerateticks.c
-	flshmmessageread.c
-	flshmmessagetick.c
-	flshmmessagewrite.c
-	flshmopenclose.c
+	openclose.c
+	message-write.c
+	message-tick.c
+	message-read.c
+	message-clear.c
+	generate-ticks.c
+	dump.c
+	connection-remove.c
+	connection-name-valid.c
+	connection-list.c
+	connection-add.c
+	chatbot.c
 )
 
 FOREACH(util ${utils})
 	GET_FILENAME_COMPONENT(util_name ${util} NAME_WE)
+	SET(name flshm-${util_name})
 
-	ADD_EXECUTABLE(${util_name} ${util})
+	ADD_EXECUTABLE(${name} ${util})
 
-	TARGET_INCLUDE_DIRECTORIES(${util_name} PRIVATE "../src" "./shared")
+	TARGET_INCLUDE_DIRECTORIES(${name} PRIVATE "../src" "./shared")
 
-	TARGET_LINK_LIBRARIES(${util_name} flshm hexdump sleep)
+	TARGET_LINK_LIBRARIES(${name} flshm hexdump sleep)
 
-	SET_TARGET_PROPERTIES(${util_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTBIN})
+	SET_TARGET_PROPERTIES(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTBIN})
 ENDFOREACH()
