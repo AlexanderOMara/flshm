@@ -117,7 +117,7 @@ uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max) {
 	// Get string length and bounds check.
 	size_t l = strlen(str);
 	uint32_t size = (uint32_t)(l + 3);
-	if (l > 0xFFFF || size > max) {
+	if (l > FLSHM_AMF0_STRING_MAX_LENGTH || size > max) {
 		return 0;
 	}
 	uint16_t sl = (uint16_t)l;
@@ -187,6 +187,7 @@ uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
 char * flshm_write_connection(char * addr, flshm_connection connection) {
 	// Copy the name with the null byte into the list and advance past it.
 	uint32_t name_size = (uint32_t)strlen(connection.name);
+
 	// Only copy name if not pointing to itself.
 	if (addr != connection.name) {
 		strcpy(addr, connection.name);
@@ -555,7 +556,7 @@ bool flshm_connection_name_valid(const char * name) {
 	uint8_t colons = 0;
 	for (uint32_t i = 0;; i++) {
 		// Check if too large.
-		if (i >= 0xFFFF) {
+		if (i >= FLSHM_AMF0_STRING_MAX_LENGTH) {
 			return false;
 		}
 
@@ -1017,19 +1018,19 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		return false;
 	}
 	// Validate host is set and valid.
-	if (!message->host || strlen(message->host) > 0xFFFF) {
+	if (!message->host || strlen(message->host) > FLSHM_AMF0_STRING_MAX_LENGTH) {
 		return false;
 	}
 	// If local-with-file sandbox, ensure filepath is set and valid.
 	if (
 		message->version >= FLSHM_VERSION_3 &&
 		message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE &&
-		(!message->filepath || strlen(message->filepath) > 0xFFFF)
+		(!message->filepath || strlen(message->filepath) > FLSHM_AMF0_STRING_MAX_LENGTH)
 	) {
 		return false;
 	}
 	// Validate method is set and valid.
-	if (!message->method || strlen(message->method) > 0xFFFF) {
+	if (!message->method || strlen(message->method) > FLSHM_AMF0_STRING_MAX_LENGTH) {
 		return false;
 	}
 

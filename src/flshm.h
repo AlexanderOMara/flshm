@@ -64,6 +64,12 @@
 #define FLSHM_CONNECTIONS_MAX_COUNT 8
 
 
+/**
+ * Maximum length of an AMF0 string.
+ */
+#define FLSHM_AMF0_STRING_MAX_LENGTH 0xFFFF
+
+
 
 
 /**
