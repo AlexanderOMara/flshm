@@ -307,7 +307,7 @@ typedef struct flshm_message {
 
 
 
-uint32_t flshm_amf0_read_string(char ** str, char * p, uint32_t max);
+uint32_t flshm_amf0_read_string(char * str, char * p, uint32_t max);
 
 uint32_t flshm_amf0_read_boolean(bool * flag, char * p, uint32_t max);
 

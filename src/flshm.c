@@ -24,7 +24,7 @@
 #include "flshm.h"
 
 
-uint32_t flshm_amf0_read_string(char ** str, char * p, uint32_t max) {
+uint32_t flshm_amf0_read_string(char * str, char * p, uint32_t max) {
 	// Bounds check the header.
 	if (max < 3) {
 		return false;
@@ -50,14 +50,9 @@ uint32_t flshm_amf0_read_string(char ** str, char * p, uint32_t max) {
 		return false;
 	}
 
-	// If null pointer, allocate memory first.
-	if (!*str) {
-		*str = malloc(sl + 1);
-	}
-
 	// Copy string to memory, null terminate.
-	memcpy(*str, p, sl);
-	(*str)[sl] = '\0';
+	memcpy(str, p, sl);
+	str[sl] = '\0';
 
 	// Return the amout of data read.
 	return size;
@@ -854,9 +849,8 @@ bool flshm_message_read(flshm_message * message, flshm_info * info) {
 	// Start a block that can be broken from, assume failure on break.
 	for (;;) {
 		// Read the connection name, or fail.
-		char * name = message->name;
 		re = flshm_amf0_read_string(
-			&name,
+			message->name,
 			shmdata + i,
 			max - i
 		);
@@ -866,9 +860,8 @@ bool flshm_message_read(flshm_message * message, flshm_info * info) {
 		i += re;
 
 		// Read the host name, or fail.
-		char * host = message->host;
 		re = flshm_amf0_read_string(
-			&host,
+			message->host,
 			shmdata + i,
 			max - i
 		);
@@ -931,9 +924,8 @@ bool flshm_message_read(flshm_message * message, flshm_info * info) {
 
 				// If sandbox local-with-file, includes sender filepath.
 				if (sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE) {
-					char * filepath = message->filepath;
 					re = flshm_amf0_read_string(
-						&filepath,
+						message->filepath,
 						shmdata + i,
 						max - i
 					);
@@ -963,9 +955,8 @@ bool flshm_message_read(flshm_message * message, flshm_info * info) {
 		}
 
 		// Read the method name or fail.
-		char * method = message->method;
 		re = flshm_amf0_read_string(
-			&method,
+			message->method,
 			shmdata + i,
 			max - i
 		);

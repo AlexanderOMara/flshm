@@ -201,9 +201,8 @@ int main(int argc, char ** argv) {
 				}
 
 				// Read the data as AMF0 string if possible.
-				char * msg = msgstr;
 				if (flshm_amf0_read_string(
-					&msg,
+					msgstr,
 					message->data,
 					message->size
 				)) {
