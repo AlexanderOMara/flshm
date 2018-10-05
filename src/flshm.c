@@ -319,10 +319,7 @@ flshm_keys flshm_get_keys(bool is_per_user) {
 }
 
 
-flshm_info * flshm_open(bool is_per_user) {
-	// First get the keys for the semaphore and shared memory.
-	flshm_keys keys = flshm_get_keys(is_per_user);
-
+flshm_info * flshm_open(flshm_keys * keys) {
 	flshm_info * info = NULL;
 
 	#ifdef _WIN32

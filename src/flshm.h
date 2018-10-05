@@ -324,10 +324,8 @@ flshm_keys flshm_get_keys(bool is_per_user);
 
 /**
  * Open the semaphores and shared memory.
- * is_per_user has same functionality of the ASVM isPerUser.
- * Should be set to match the ASVM targeted.
  */
-flshm_info * flshm_open(bool is_per_user);
+flshm_info * flshm_open(flshm_keys * keys);
 
 
 /**
