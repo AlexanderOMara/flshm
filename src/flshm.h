@@ -283,6 +283,24 @@ typedef struct flshm_message {
 
 
 
+uint32_t flshm_amf0_read_string(char ** str, char * p, uint32_t max);
+
+uint32_t flshm_amf0_read_boolean(bool * flag, char * p, uint32_t max);
+
+uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max);
+
+uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max);
+
+uint32_t flshm_amf0_write_boolean(bool flag, char * p, uint32_t max);
+
+uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max);
+
+char * flshm_write_connection(char * addr, flshm_connection connection);
+
+uint32_t flshm_hash_uid(uint32_t uid);
+
+bool flshm_shm_inited(void * shmdata);
+
 /**
  * Generate a message tick.
  * Based on current time, but can return 0 in theory.

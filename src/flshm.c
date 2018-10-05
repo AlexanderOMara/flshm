@@ -24,7 +24,6 @@
 #include "flshm.h"
 
 
-// Private functions to read the subset of AMF0 used in the header.
 uint32_t flshm_amf0_read_string(char ** str, char * p, uint32_t max) {
 	// Bounds check the header.
 	if (max < 3) {
@@ -130,7 +129,6 @@ uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max) {
 }
 
 
-// Private functions to write the subset of AMF0 used in the header.
 uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max) {
 	// Get string length and bounds check.
 	size_t l = strlen(str);
@@ -220,7 +218,6 @@ uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
 }
 
 
-// Private function to write serialized connection to memory.
 char * flshm_write_connection(char * addr, flshm_connection connection) {
 	// Copy the name with the null byte into the list and advance past it.
 	uint32_t name_size = (uint32_t)strlen(connection.name);
@@ -248,7 +245,6 @@ char * flshm_write_connection(char * addr, flshm_connection connection) {
 }
 
 
-// Private function to hash a uid into a shm key.
 uint32_t flshm_hash_uid(uint32_t uid) {
 	// Hash the uid into something unique.
 	uint32_t a = 9 * ((uid + ~(uid << 15)) ^ ((uid + ~(uid << 15)) >> 10));
@@ -259,7 +255,6 @@ uint32_t flshm_hash_uid(uint32_t uid) {
 }
 
 
-// Private function to check if sharded memory has been initialized.
 bool flshm_shm_inited(void * shmdata) {
 	// Check for 2 uint32 flag in the head.
 	return *((uint32_t *)shmdata) == 1 &&
