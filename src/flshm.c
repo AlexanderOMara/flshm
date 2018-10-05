@@ -299,7 +299,7 @@ flshm_keys * flshm_keys_create(bool is_per_user) {
 		if (is_per_user) {
 			// The isPerUser generated keys.
 			uint32_t shm = flshm_hash_uid(getuid());
-			snprintf(keys->sem, FLSHM_KEYS_STRING_MAX_LENGTH, "%u", shm);
+			sprintf(keys->sem, "%u", shm);
 			keys->shm = (key_t)shm;
 		}
 		else {
@@ -795,41 +795,22 @@ flshm_message * flshm_message_create() {
 	flshm_message * r = malloc(sizeof(flshm_message));
 	r->tick = 0;
 	r->amfl = 0;
-	r->name = NULL;
-	r->host = NULL;
+	r->name[0] = '\0';
+	r->host[0] = '\0';
 	r->version = FLSHM_VERSION_1;
 	r->sandboxed = false;
 	r->https = false;
 	r->sandbox = FLSHM_SECURITY_NONE;
 	r->swfv = 0;
-	r->filepath = NULL;
+	r->filepath[0] = '\0';
 	r->amfv = FLSHM_AMF0;
-	r->method = NULL;
+	r->method[0] = '\0';
 	r->size = 0;
-	r->data = NULL;
 	return r;
 }
 
 
-void flshm_message_free(flshm_message * message) {
-	// Free any and all memory associated with the message structure.
-	if (message->name) {
-		free(message->name);
-	}
-	if (message->host) {
-		free(message->host);
-	}
-	if (message->filepath) {
-		free(message->filepath);
-	}
-	if (message->method) {
-		free(message->method);
-	}
-	if (message->data) {
-		free(message->data);
-	}
-
-	// Then free the message structure itself.
+void flshm_message_destroy(flshm_message * message) {
 	free(message);
 }
 
@@ -838,23 +819,15 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// All the properties to be set.
 	uint32_t tick;
 	uint32_t amfl;
-	char * name = NULL;
-	char * host = NULL;
 	flshm_version version = FLSHM_VERSION_1;
 	bool sandboxed = false;
 	bool https = false;
 	flshm_security sandbox = FLSHM_SECURITY_NONE;
 	uint32_t swfv = 0;
-	char * filepath = NULL;
 	flshm_amf amfv = FLSHM_AMF0;
-	char * method = NULL;
 	uint32_t size = 0;
-	void * data = NULL;
 
 	double d2i;
-
-	// Default to returning null.
-	flshm_message * message = NULL;
 
 	// Pointer to shared memory.
 	char * shmdata = (char *)info->data;
@@ -871,6 +844,10 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		return NULL;
 	}
 
+	// Message instance.
+	flshm_message * message = flshm_message_create();
+	bool success = false;
+
 	// Keep track of position and bounds.
 	uint32_t i = FLSHM_MESSAGE_BODY_OFFSET;
 	uint32_t max = FLSHM_MESSAGE_BODY_OFFSET + amfl;
@@ -879,6 +856,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// Start a block that can be broken from, assume failure on break.
 	for (;;) {
 		// Read the connection name, or fail.
+		char * name = message->name;
 		re = flshm_amf0_read_string(
 			&name,
 			shmdata + i,
@@ -890,6 +868,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		i += re;
 
 		// Read the host name, or fail.
+		char * host = message->host;
 		re = flshm_amf0_read_string(
 			&host,
 			shmdata + i,
@@ -954,6 +933,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 
 				// If sandbox local-with-file, includes sender filepath.
 				if (sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE) {
+					char * filepath = message->filepath;
 					re = flshm_amf0_read_string(
 						&filepath,
 						shmdata + i,
@@ -982,6 +962,7 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		}
 
 		// Read the method name or fail.
+		char * method = message->method;
 		re = flshm_amf0_read_string(
 			&method,
 			shmdata + i,
@@ -992,48 +973,33 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		}
 		i += re;
 
-		// Calculate the size of the message, and copy to memory.
+		// Copy the message data.
 		size = max - i;
 		if (size) {
-			data = malloc(size);
-			memcpy(data, shmdata + i, size);
+			memcpy(message->data, shmdata + i, size);
 		}
 
-		// Everything needed, allocate and return struct.
-		message = malloc(sizeof(flshm_message));
-
+		// Finish setting the members.
 		message->tick = tick;
 		message->amfl = amfl;
-		message->name = name;
-		message->host = host;
 		message->version = version;
 		message->sandboxed = sandboxed;
 		message->https = https;
 		message->sandbox = sandbox;
 		message->swfv = swfv;
-		message->filepath = filepath;
 		message->amfv = amfv;
-		message->method = method;
 		message->size = size;
-		message->data = data;
+		success = true;
 
 		break;
 	}
 
-	// If message not initialized, cleanup any memory allocated.
-	if (!message) {
-		if (filepath) {
-			free(filepath);
-		}
-		if (host) {
-			free(host);
-		}
-		if (name) {
-			free(name);
-		}
+	if (success) {
+		return message;
 	}
 
-	return message;
+	free(message);
+	return NULL;
 }
 
 
@@ -1042,33 +1008,28 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 	if (!message->tick) {
 		return false;
 	}
+
 	// Validate connection is set and valid.
-	if (!message->name || !flshm_connection_name_valid(message->name)) {
+	if (!flshm_connection_name_valid(message->name)) {
 		return false;
 	}
-	// Validate host is set and valid.
-	if (
-		!message->host ||
-		strlen(message->host) > FLSHM_AMF0_STRING_MAX_LENGTH
-	) {
+
+	// Validate host is set.
+	if (!message->host[0]) {
 		return false;
 	}
-	// If local-with-file sandbox, ensure filepath is set and valid.
+
+	// If local-with-file sandbox, ensure filepath is set.
 	if (
 		message->version >= FLSHM_VERSION_3 &&
 		message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE &&
-		(
-			!message->filepath ||
-			strlen(message->filepath) > FLSHM_AMF0_STRING_MAX_LENGTH
-		)
+		!message->filepath[0]
 	) {
 		return false;
 	}
-	// Validate method is set and valid.
-	if (
-		!message->method ||
-		strlen(message->method) > FLSHM_AMF0_STRING_MAX_LENGTH
-	) {
+
+	// Validate method is set.
+	if (!message->method[0]) {
 		return false;
 	}
 
@@ -1218,8 +1179,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		*((uint32_t *)(shmdata + FLSHM_MESSAGE_SIZE_OFFSET)) = i;
 
 		// Set the message tick.
-		*((uint32_t *)(shmdata + FLSHM_MESSAGE_TICK_OFFSET)) =
-			message->tick;
+		*((uint32_t *)(shmdata + FLSHM_MESSAGE_TICK_OFFSET)) = message->tick;
 
 		// If finished the block, then successful.
 		success = true;

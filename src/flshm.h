@@ -69,10 +69,23 @@
  */
 #define FLSHM_AMF0_STRING_MAX_LENGTH 0xFFFF
 
+
+/**
+ * Maximum size of an AMF0 string.
+ */
+#define FLSHM_AMF0_STRING_MAX_SIZE (FLSHM_AMF0_STRING_MAX_LENGTH + 1)
+
+
 /**
  * Maximum length of a keys string if used.
  */
-#define FLSHM_KEYS_STRING_MAX_LENGTH 24
+#define FLSHM_KEYS_STRING_MAX_LENGTH 23
+
+
+/**
+ * Maximum size of a keys string if used.
+ */
+#define FLSHM_KEYS_STRING_MAX_SIZE (FLSHM_KEYS_STRING_MAX_LENGTH + 1)
 
 
 
@@ -126,10 +139,10 @@ typedef enum flshm_amf {
  */
 typedef struct flshm_keys {
 	#ifdef _WIN32
-		char sem[FLSHM_KEYS_STRING_MAX_LENGTH];
-		char shm[FLSHM_KEYS_STRING_MAX_LENGTH];
+		char sem[FLSHM_KEYS_STRING_MAX_SIZE];
+		char shm[FLSHM_KEYS_STRING_MAX_SIZE];
 	#elif __APPLE__
-		char sem[FLSHM_KEYS_STRING_MAX_LENGTH];
+		char sem[FLSHM_KEYS_STRING_MAX_SIZE];
 		key_t shm;
 	#else
 		key_t sem;
@@ -218,12 +231,12 @@ typedef struct flshm_message {
 	/**
 	 * The sending connection name.
 	 */
-	char * name;
+	char name[FLSHM_AMF0_STRING_MAX_SIZE];
 
 	/**
 	 * The sending conneciton host.
 	 */
-	char * host;
+	char host[FLSHM_AMF0_STRING_MAX_SIZE];
 
 	/**
 	 * What version the message format is.
@@ -264,7 +277,7 @@ typedef struct flshm_message {
 	 * FLSHM_VERSION_3+
 	 * FP8+ and sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE
 	 */
-	char * filepath;
+	char filepath[FLSHM_AMF0_STRING_MAX_SIZE];
 
 	/**
 	 * The AMF version the message data is encoded with.
@@ -278,7 +291,7 @@ typedef struct flshm_message {
 	/**
 	 * The method name to be called in by the reciever.
 	 */
-	char * method;
+	char method[FLSHM_AMF0_STRING_MAX_SIZE];
 
 	/**
 	 * The size of the message arguments data.
@@ -288,7 +301,7 @@ typedef struct flshm_message {
 	/**
 	 * The message data for the arguments, encoded in AMF format in amfv.
 	 */
-	void * data;
+	char data[FLSHM_MESSAGE_MAX_SIZE];
 } flshm_message;
 
 
@@ -401,7 +414,7 @@ flshm_message * flshm_message_create();
 /**
  * Free the memory returned from flshm_message_read.
  */
-void flshm_message_free(flshm_message * message);
+void flshm_message_destroy(flshm_message * message);
 
 
 /**

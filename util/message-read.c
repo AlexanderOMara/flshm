@@ -54,7 +54,7 @@ int main() {
 			message->size
 		);
 		hexdump(message->data, message->size, 16, 0);
-		flshm_message_free(message);
+		flshm_message_destroy(message);
 	}
 	else {
 		printf("FAILED: flshm_message_read\n");

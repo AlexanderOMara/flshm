@@ -53,7 +53,7 @@ int main(int argc, char ** argv) {
 	char * filepath = NULL;
 	flshm_amf amfv = FLSHM_AMF0;
 	char * method = NULL;
-	uint32_t size = 0;
+	size_t size = 0;
 	void * data = NULL;
 
 	if (!sscanf(argv[1], "%u", &tick) || !tick) {
@@ -79,22 +79,27 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 	method = argv[11];
-	data = hex_to_bin(argv[12], (size_t *)&size);
 
-	flshm_message * message = malloc(sizeof(flshm_message));
+	data = hex_to_bin(argv[12], &size);
+	if (size > FLSHM_MESSAGE_MAX_SIZE) {
+		printf("FAILED: too much data\n");
+		return EXIT_FAILURE;
+	}
+
+	flshm_message * message = flshm_message_create();
 	message->tick = tick;
-	message->name = name;
-	message->host = host;
+	strcpy(message->name, name);
+	strcpy(message->host, host);
 	message->version = version;
 	message->sandboxed = sandboxed;
 	message->https = https;
 	message->sandbox = sandbox;
 	message->swfv = swfv;
-	message->filepath = filepath;
+	strcpy(message->filepath, filepath);
 	message->amfv = amfv;
-	message->method = method;
-	message->size = size;
-	message->data = data;
+	strcpy(message->method, method);
+	message->size = (uint32_t)size;
+	memcpy(message->data, data, size);
 
 	flshm_keys * keys = flshm_keys_create(false);
 	flshm_info * info = flshm_open(keys);
@@ -113,6 +118,8 @@ int main(int argc, char ** argv) {
 		printf("FAILED: flshm_message_write\n");
 		ret = EXIT_FAILURE;
 	}
+
+	flshm_message_destroy(message);
 
 	// Unlock memory.
 	flshm_unlock(info);

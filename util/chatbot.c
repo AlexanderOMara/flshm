@@ -181,14 +181,21 @@ int main(int argc, char ** argv) {
 					}
 					while (tick == message->tick);
 
+					flshm_message * response = flshm_message_create();
+
 					// Create a buffer for the data, and write to it.
+					// response->data
 					uint32_t max = 3 + (uint32_t)strlen(msgstr);
 					char * data = malloc(max);
-					uint32_t size = flshm_amf0_write_string(msgstr, data, max);
+					uint32_t size = flshm_amf0_write_string(
+						msgstr,
+						(char *)&response->data,
+						FLSHM_MESSAGE_MAX_SIZE
+					);
 					if (size) {
 						// Create a new filepath from the existing one.
 						char * filepath = NULL;
-						if (message->filepath) {
+						if (message->filepath[0]) {
 							uint32_t fpl = (uint32_t)strlen(message->filepath);
 							char append[] = ".chatbot.swf";
 							filepath = malloc(fpl + sizeof(append));
@@ -197,32 +204,37 @@ int main(int argc, char ** argv) {
 						}
 
 						// Create the response data, mimick sender.
-						flshm_message response;
-						response.tick = tick;
-						response.name = connection_name_peer;
-						response.host = message->host;
-						response.version = message->version;
-						response.sandboxed = message->sandboxed;
-						response.https = message->https;
-						response.sandbox = message->sandbox;
-						response.swfv = message->swfv;
-						response.filepath = filepath;
-						response.amfv = FLSHM_AMF0;
-						response.method = message->method;
-						response.data = data;
-						response.size = size;
+						// Borrows pointers: name, host, filepath, method, data
+						response->tick = tick;
+						strcpy(response->name, connection_name_peer);
+						strcpy(response->host, message->host);
+						response->version = message->version;
+						response->sandboxed = message->sandboxed;
+						response->https = message->https;
+						response->sandbox = message->sandbox;
+						response->swfv = message->swfv;
+						strcpy(response->filepath, filepath);
+						// response->filepath = filepath;
+						response->amfv = FLSHM_AMF0;
+						strcpy(response->method, message->method);
+						// response->method = message->method;
+						// response->data = data;
+						response->size = size;
 
 						// Write the message to shared memory.
 						// In theory, should poll the tick to ensure is read.
 						// If not read in set timout, then erase to free.
-						if (!flshm_message_write(info, &response)) {
+						if (!flshm_message_write(info, response)) {
 							printf("FAILED: flshm_message_write\n");
 						}
 
 						// Show debug info for the response.
 						if (debug) {
-							dump_message(&response);
+							dump_message(response);
 						}
+
+						// Release those borrowed references before free.
+						flshm_message_destroy(response);
 
 						// Print the response string.
 						printf("Response: %s\n", msgstr);
@@ -242,7 +254,7 @@ int main(int argc, char ** argv) {
 			}
 
 			// Free the memory from the message.
-			flshm_message_free(message);
+			flshm_message_destroy(message);
 		}
 
 		flshm_unlock(info);
