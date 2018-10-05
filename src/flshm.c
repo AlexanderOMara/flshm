@@ -313,8 +313,8 @@ flshm_keys * flshm_keys_create(bool is_per_user) {
 
 		// Generate key.
 		key_t key = (key_t)flshm_hash_uid(getuid());
-		keys.sem = key;
-		keys.shm = key;
+		keys->sem = key;
+		keys->shm = key;
 	#endif
 
 	return keys;
