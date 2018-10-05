@@ -2,33 +2,33 @@ environment:
   vsversion: none
   arch: default
   matrix:
-    - platform: vs
-      vsversion: 2013
-      arch: x86
-
-    - platform: vs
-      vsversion: 2015
-      arch: x86
-
-    - platform: vs
-      vsversion: 2017
-      arch: x86
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
-    - platform: vs
-      vsversion: 2013
-      arch: x64
-
-    - platform: vs
-      vsversion: 2015
-      arch: x64
-
-    - platform: vs
-      vsversion: 2017
-      arch: x64
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-
     - platform: mingw32
+
+    - platform: vs
+      vsversion: 2013
+      arch: x86
+
+    - platform: vs
+      vsversion: 2015
+      arch: x86
+
+    - platform: vs
+      vsversion: 2017
+      arch: x86
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+    - platform: vs
+      vsversion: 2013
+      arch: x64
+
+    - platform: vs
+      vsversion: 2015
+      arch: x64
+
+    - platform: vs
+      vsversion: 2017
+      arch: x64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 init:
   - echo %platform%
