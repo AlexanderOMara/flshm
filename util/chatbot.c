@@ -120,7 +120,7 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	flshm_keys * keys = flshm_keys_create();
+	keys = flshm_keys_create();
 	flshm_keys_init(keys, is_per_user);
 	info = flshm_open(keys);
 	if (!info) {
