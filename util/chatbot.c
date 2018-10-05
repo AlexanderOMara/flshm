@@ -60,8 +60,27 @@ static flshm_keys * keys = NULL;
 static flshm_info * info = NULL;
 static flshm_connection connection = { NULL, 0, 0 };
 static bool locked = false;
+static flshm_message * message = NULL;
+static flshm_message * response = NULL;
+static char filepath_append[] = ".chatbot.swf";
 
-static void onshutdown(int signo) {
+static void filepath_create(char * dest, char * src) {
+	dest[0] = '\0';
+
+	if (!src[0]) {
+		return;
+	}
+
+	size_t len = strlen(src);
+	if (len + (sizeof(filepath_append) - 1) > FLSHM_AMF0_STRING_MAX_LENGTH) {
+		return;
+	}
+
+	strcpy(dest, src);
+	strcat(dest, filepath_append);
+}
+
+static void cleanup(void) {
 	printf("\nCleaning up...\n");
 	if (info) {
 		if (!locked && connection.name) {
@@ -69,11 +88,27 @@ static void onshutdown(int signo) {
 			flshm_connection_remove(info, connection);
 		}
 		flshm_unlock(info);
+	}
+	if (response) {
+		flshm_message_destroy(response);
+		response = NULL;
+	}
+	if (message) {
+		flshm_message_destroy(message);
+		message = NULL;
+	}
+	if (info) {
 		flshm_close(info);
+		info = NULL;
 	}
 	if (keys) {
 		flshm_keys_destroy(keys);
+		keys = NULL;
 	}
+}
+
+static void onshutdown(int signo) {
+	cleanup();
 	printf("Shutting down...\n");
 	exit(signo == SIGINT ? EXIT_SUCCESS : EXIT_FAILURE);
 }
@@ -140,6 +175,11 @@ int main(int argc, char ** argv) {
 	}
 	flshm_unlock(info);
 
+	message = flshm_message_create();
+	response = flshm_message_create();
+
+	char msgstr[FLSHM_AMF0_STRING_MAX_SIZE];
+
 	printf("Chatbot runnning...\n");
 
 	// Run loop.
@@ -149,8 +189,7 @@ int main(int argc, char ** argv) {
 		locked = true;
 
 		// Read message if present.
-		flshm_message * message = flshm_message_read(info);
-		if (message) {
+		if (flshm_message_read(message, info)) {
 			// Check that this message is intended for this.
 			if (!strcmp(connection_name_self, message->name)) {
 				// Clear the message from the memory.
@@ -162,9 +201,9 @@ int main(int argc, char ** argv) {
 				}
 
 				// Read the data as AMF0 string if possible.
-				char * msgstr = NULL;
+				char * msg = msgstr;
 				if (flshm_amf0_read_string(
-					&msgstr,
+					&msg,
 					message->data,
 					message->size
 				)) {
@@ -181,30 +220,14 @@ int main(int argc, char ** argv) {
 					}
 					while (tick == message->tick);
 
-					flshm_message * response = flshm_message_create();
-
 					// Create a buffer for the data, and write to it.
-					// response->data
-					uint32_t max = 3 + (uint32_t)strlen(msgstr);
-					char * data = malloc(max);
 					uint32_t size = flshm_amf0_write_string(
 						msgstr,
 						(char *)&response->data,
 						FLSHM_MESSAGE_MAX_SIZE
 					);
 					if (size) {
-						// Create a new filepath from the existing one.
-						char * filepath = NULL;
-						if (message->filepath[0]) {
-							uint32_t fpl = (uint32_t)strlen(message->filepath);
-							char append[] = ".chatbot.swf";
-							filepath = malloc(fpl + sizeof(append));
-							memcpy(filepath, message->filepath, fpl);
-							memcpy(filepath + fpl, append, sizeof(append));
-						}
-
 						// Create the response data, mimick sender.
-						// Borrows pointers: name, host, filepath, method, data
 						response->tick = tick;
 						strcpy(response->name, connection_name_peer);
 						strcpy(response->host, message->host);
@@ -213,18 +236,15 @@ int main(int argc, char ** argv) {
 						response->https = message->https;
 						response->sandbox = message->sandbox;
 						response->swfv = message->swfv;
-						strcpy(response->filepath, filepath);
-						// response->filepath = filepath;
+						filepath_create(response->filepath, message->filepath);
 						response->amfv = FLSHM_AMF0;
 						strcpy(response->method, message->method);
-						// response->method = message->method;
-						// response->data = data;
 						response->size = size;
 
 						// Write the message to shared memory.
 						// In theory, should poll the tick to ensure is read.
 						// If not read in set timout, then erase to free.
-						if (!flshm_message_write(info, response)) {
+						if (!flshm_message_write(response, info)) {
 							printf("FAILED: flshm_message_write\n");
 						}
 
@@ -233,28 +253,11 @@ int main(int argc, char ** argv) {
 							dump_message(response);
 						}
 
-						// Release those borrowed references before free.
-						flshm_message_destroy(response);
-
 						// Print the response string.
 						printf("Response: %s\n", msgstr);
-
-						// Free filepath if allocated.
-						if (filepath) {
-							free(filepath);
-						}
 					}
-
-					// Free the data buffer.
-					free(data);
-
-					// Free the parsed string.
-					free(msgstr);
 				}
 			}
-
-			// Free the memory from the message.
-			flshm_message_destroy(message);
 		}
 
 		flshm_unlock(info);
@@ -263,8 +266,7 @@ int main(int argc, char ** argv) {
 		sleep_ms(100);
 	}
 
-	flshm_close(info);
-	flshm_keys_destroy(keys);
+	cleanup();
 
 	return EXIT_SUCCESS;
 }

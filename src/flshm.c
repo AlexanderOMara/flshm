@@ -815,7 +815,7 @@ void flshm_message_destroy(flshm_message * message) {
 }
 
 
-flshm_message * flshm_message_read(flshm_info * info) {
+bool flshm_message_read(flshm_message * message, flshm_info * info) {
 	// All the properties to be set.
 	uint32_t tick;
 	uint32_t amfl;
@@ -835,23 +835,21 @@ flshm_message * flshm_message_read(flshm_info * info) {
 	// Read the tick count and check if set (only valid if non-zero).
 	tick = *((uint32_t *)(shmdata + FLSHM_MESSAGE_TICK_OFFSET));
 	if (!tick) {
-		return NULL;
+		return false;
 	}
 
 	// Read the message size if present and sanity check it.
 	amfl = *((uint32_t *)(shmdata + FLSHM_MESSAGE_SIZE_OFFSET));
 	if (!amfl || amfl > FLSHM_MESSAGE_MAX_SIZE) {
-		return NULL;
+		return false;
 	}
-
-	// Message instance.
-	flshm_message * message = flshm_message_create();
-	bool success = false;
 
 	// Keep track of position and bounds.
 	uint32_t i = FLSHM_MESSAGE_BODY_OFFSET;
 	uint32_t max = FLSHM_MESSAGE_BODY_OFFSET + amfl;
 	uint32_t re;
+
+	bool success = false;
 
 	// Start a block that can be broken from, assume failure on break.
 	for (;;) {
@@ -944,6 +942,9 @@ flshm_message * flshm_message_read(flshm_info * info) {
 					}
 					i += re;
 				}
+				else {
+					message->filepath[0] = '\0';
+				}
 
 				// Read AMF version if present, else ignore.
 				re = flshm_amf0_read_double(
@@ -994,16 +995,11 @@ flshm_message * flshm_message_read(flshm_info * info) {
 		break;
 	}
 
-	if (success) {
-		return message;
-	}
-
-	free(message);
-	return NULL;
+	return success;
 }
 
 
-bool flshm_message_write(flshm_info * info, flshm_message * message) {
+bool flshm_message_write(flshm_message * message, flshm_info * info) {
 	// Validate tick is non-0.
 	if (!message->tick) {
 		return false;

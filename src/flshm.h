@@ -420,13 +420,13 @@ void flshm_message_destroy(flshm_message * message);
 /**
  * Read a message from shared memory.
  */
-flshm_message * flshm_message_read(flshm_info * info);
+bool flshm_message_read(flshm_message * message, flshm_info * info);
 
 
 /**
  * Write a message to shared memory.
  */
-bool flshm_message_write(flshm_info * info, flshm_message * message);
+bool flshm_message_write(flshm_message * message, flshm_info * info);
 
 
 /**

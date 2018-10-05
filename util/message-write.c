@@ -86,6 +86,7 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 
+	// Create message.
 	flshm_message * message = flshm_message_create();
 	message->tick = tick;
 	strcpy(message->name, name);
@@ -114,15 +115,16 @@ int main(int argc, char ** argv) {
 	// Lock memory, to avoid race conditions.
 	flshm_lock(info);
 
-	if (!flshm_message_write(info, message)) {
+	if (!flshm_message_write(message, info)) {
 		printf("FAILED: flshm_message_write\n");
 		ret = EXIT_FAILURE;
 	}
 
-	flshm_message_destroy(message);
-
 	// Unlock memory.
 	flshm_unlock(info);
+
+	// Cleanup message.
+	flshm_message_destroy(message);
 
 	// Close info.
 	flshm_close(info);
