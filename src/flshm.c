@@ -281,6 +281,9 @@ uint32_t flshm_tick() {
 
 flshm_keys * flshm_keys_create(bool is_per_user) {
 	flshm_keys * keys = malloc(sizeof(flshm_keys));
+	if (!keys) {
+		return NULL;
+	}
 
 	#ifdef _WIN32
 		// Not used.
@@ -321,18 +324,23 @@ void flshm_keys_destroy(flshm_keys * keys) {
 
 
 flshm_info * flshm_open(flshm_keys * keys) {
-	flshm_info * info = NULL;
+	flshm_info * info = malloc(sizeof(flshm_info));
+	if (!info) {
+		return NULL;
+	}
 
 	#ifdef _WIN32
 		// First try to open the semaphore.
 		HANDLE sem = OpenMutex(MUTEX_ALL_ACCESS, FALSE, keys->sem);
 		if (sem == NULL) {
+			free(info);
 			return NULL;
 		}
 
 		// Next try to open the shared memory.
 		HANDLE shm = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, keys->shm);
 		if (shm == NULL) {
+			free(info);
 			CloseHandle(sem);
 			return NULL;
 		}
@@ -346,6 +354,7 @@ flshm_info * flshm_open(flshm_keys * keys) {
 			FLSHM_SIZE
 		);
 		if (shmaddr == NULL) {
+			free(info);
 			CloseHandle(shm);
 			CloseHandle(sem);
 			return NULL;
@@ -353,6 +362,7 @@ flshm_info * flshm_open(flshm_keys * keys) {
 
 		// Check that the memory has already been initialized.
 		if (!flshm_shm_inited(shmaddr)) {
+			free(info);
 			UnmapViewOfFile(shmaddr);
 			CloseHandle(shm);
 			CloseHandle(sem);
@@ -360,7 +370,6 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		}
 
 		// Everything we need, create info data.
-		info = malloc(sizeof(flshm_info));
 		info->data = (void *)shmaddr;
 		info->sem = sem;
 		info->shm = shm;
@@ -369,12 +378,14 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		// First try to open the semaphore.
 		sem_t * semdesc = sem_open(keys->sem, 0);
 		if (semdesc == SEM_FAILED) {
+			free(info);
 			return NULL;
 		}
 
 		// Next try to open the shared memory.
 		int shmid = shmget(keys->shm, FLSHM_SIZE, 0);
 		if (shmid == -1) {
+			free(info);
 			sem_close(semdesc);
 			return NULL;
 		}
@@ -382,6 +393,7 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		// Finally try to attach to the shared memory.
 		void * shmaddr = shmat(shmid, NULL, 0);
 		if (shmaddr == (void *)-1) {
+			free(info);
 			close(shmid);
 			sem_close(semdesc);
 			return NULL;
@@ -389,6 +401,7 @@ flshm_info * flshm_open(flshm_keys * keys) {
 
 		// Check that the memory has already been initialized.
 		if (!flshm_shm_inited(shmaddr)) {
+			free(info);
 			shmdt(shmaddr);
 			close(shmid);
 			sem_close(semdesc);
@@ -396,7 +409,6 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		}
 
 		// Everything we need, create info data.
-		info = malloc(sizeof(flshm_info));
 		info->data = (void *)shmaddr;
 		info->semdesc = semdesc;
 		info->shmid = shmid;
@@ -405,31 +417,34 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		// First try to open the semaphore.
 		int semid = semget(keys->sem, 1, 0);
 		if (semid == -1) {
+			free(info);
 			return NULL;
 		}
 
 		// Next try to open the shared memory.
 		int shmid = shmget(keys->shm, FLSHM_SIZE, 0);
 		if (shmid == -1) {
+			free(info);
 			return NULL;
 		}
 
 		// Finally try to attach to the shared memory.
 		void * shmaddr = shmat(shmid, NULL, 0);
 		if (shmaddr == (void *)-1) {
+			free(info);
 			close(shmid);
 			return NULL;
 		}
 
 		// Check that the memory has already been initialized.
 		if (!flshm_shm_inited(shmaddr)) {
+			free(info);
 			shmdt(shmaddr);
 			close(shmid);
 			return NULL;
 		}
 
 		// Everything we need, create info data.
-		info = malloc(sizeof(flshm_info));
 		info->data = (void *)shmaddr;
 		info->semid = semid;
 		info->shmid = shmid;
@@ -787,21 +802,24 @@ uint32_t flshm_message_tick(flshm_info * info) {
 
 
 flshm_message * flshm_message_create() {
-	flshm_message * r = malloc(sizeof(flshm_message));
-	r->tick = 0;
-	r->amfl = 0;
-	r->name[0] = '\0';
-	r->host[0] = '\0';
-	r->version = FLSHM_VERSION_1;
-	r->sandboxed = false;
-	r->https = false;
-	r->sandbox = FLSHM_SECURITY_NONE;
-	r->swfv = 0;
-	r->filepath[0] = '\0';
-	r->amfv = FLSHM_AMF0;
-	r->method[0] = '\0';
-	r->size = 0;
-	return r;
+	flshm_message * message = malloc(sizeof(flshm_message));
+	if (!message) {
+		return NULL;
+	}
+	message->tick = 0;
+	message->amfl = 0;
+	message->name[0] = '\0';
+	message->host[0] = '\0';
+	message->version = FLSHM_VERSION_1;
+	message->sandboxed = false;
+	message->https = false;
+	message->sandbox = FLSHM_SECURITY_NONE;
+	message->swfv = 0;
+	message->filepath[0] = '\0';
+	message->amfv = FLSHM_AMF0;
+	message->method[0] = '\0';
+	message->size = 0;
+	return message;
 }
 
 
