@@ -434,11 +434,9 @@ void flshm_close(flshm_info * info) {
 
 			// If no open connection, then remove shared memory.
 			if (!ds.shm_nattch) {
-				// Delete the shared memory.
 				shmctl(info->shm, IPC_RMID, &ds);
 			}
 
-			// Unlock and continue closing.
 			flshm_unlock(info);
 		}
 
