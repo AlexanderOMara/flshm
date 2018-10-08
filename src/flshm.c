@@ -331,85 +331,81 @@ flshm_info * flshm_open(flshm_keys * keys) {
 
 	#ifdef _WIN32
 		// Open semaphore.
-		HANDLE sem = OpenMutex(MUTEX_ALL_ACCESS, FALSE, keys->sem);
+		info->sem = OpenMutex(MUTEX_ALL_ACCESS, FALSE, keys->sem);
 
 		// Open the shared memory.
-		HANDLE shm = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, keys->shm);
+		info->shm = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, keys->shm);
 
 		// Attach to shared memory.
-		LPVOID shmaddr = shm ? MapViewOfFile(
-			shm,
-			FILE_MAP_ALL_ACCESS,
-			0,
-			0,
-			FLSHM_SIZE
-		) : NULL;
+		info->shmaddr = info->shm ?
+			MapViewOfFile(info->shm, FILE_MAP_ALL_ACCESS, 0, 0, FLSHM_SIZE) :
+			NULL;
+		info->data = info->shmaddr;
 
 		// Cleanup if any failed.
-		if (!sem || !shm || !shmaddr || !flshm_shm_inited(shmaddr)) {
-			if (shmaddr) {
-				UnmapViewOfFile(shmaddr);
+		if (
+			!info->sem ||
+			!info->shm ||
+			!info->shmaddr ||
+			!flshm_shm_inited(info->data)
+		) {
+			if (info->shmaddr) {
+				UnmapViewOfFile(info->shmaddr);
 			}
-			if (shm) {
-				CloseHandle(shm);
+			if (info->shm) {
+				CloseHandle(info->shm);
 			}
-			if (sem) {
-				CloseHandle(sem);
+			if (info->sem) {
+				CloseHandle(info->sem);
 			}
 			free(info);
 			return NULL;
 		}
-
-		// Everything we need, create info data.
-		info->data = (void *)shmaddr;
-		info->sem = sem;
-		info->shm = shm;
-		info->shmaddr = shmaddr;
 	#else
-		void * badptr = (void *)-1;
 		bool semopen;
+		void * badptr = (void *)-1;
 
 		// Open semaphore.
 		#if __APPLE__
-			sem_t * sem = sem_open(keys->sem, 0);
-			semopen = sem != SEM_FAILED;
+			info->sem = sem_open(keys->sem, 0);
+			semopen = info->sem != SEM_FAILED;
 		#else
-			int sem = semget(keys->sem, 1, 0);
-			semopen = sem == -1;
+			info->sem = semget(keys->sem, 1, 0);
+			semopen = info->sem > -1;
 		#endif
 
 		// Open the shared memory.
-		int shm = shmget(keys->shm, FLSHM_SIZE, 0);
-		bool shmgot = shm != -1;
+		info->shm = shmget(keys->shm, FLSHM_SIZE, 0);
+		bool shmgot = info->shm > -1;
 
 		// Attach to shared memory.
-		void * shmaddr = shmgot ? shmat(shm, NULL, 0) : badptr;
-		bool shmopen = shmaddr != badptr;
+		info->shmaddr = shmgot ? shmat(info->shm, NULL, 0) : badptr;
+		info->data = (void *)info->shmaddr;
+		bool shmopen = info->shmaddr != badptr;
 
 		// Cleanup if any failed.
-		if (!semopen || !shmgot || !shmopen || !flshm_shm_inited(shmaddr)) {
+		if (
+			!semopen ||
+			!shmgot ||
+			!shmopen ||
+			!flshm_shm_inited(info->data)
+		) {
 			if (shmopen) {
-				shmdt(shmaddr);
+				shmdt(info->shmaddr);
 			}
 			if (shmgot) {
-				close(shm);
+				close(info->shm);
 			}
 			if (semopen) {
 				#if __APPLE__
-					sem_close(sem);
+					sem_close(info->sem);
 				#else
-					close(sem);
+					close(info->sem);
 				#endif
 			}
 			free(info);
 			return NULL;
 		}
-
-		// Everything we need, create info data.
-		info->data = (void *)shmaddr;
-		info->sem = sem;
-		info->shm = shm;
-		info->shmaddr = shmaddr;
 	#endif
 
 	return info;
@@ -417,26 +413,18 @@ flshm_info * flshm_open(flshm_keys * keys) {
 
 
 void flshm_close(flshm_info * info) {
-	// Cleat the data pointer.
-	info->data = NULL;
-
 	#ifdef _WIN32
-		// Detach from shared memory, and clear the address.
+		// Detach from shared memory.
 		UnmapViewOfFile(info->shmaddr);
-		info->shmaddr =  NULL;
 
-		// Close the shared memory, and clear the id.
-		// No need to delete, does not persist once everything detaches.
+		// Close the shared memory.
 		CloseHandle(info->shm);
-		info->shm = NULL;
 
-		// Close the semaphore and null it.
+		// Close semaphore.
 		CloseHandle(info->sem);
-		info->sem = NULL;
 	#else
-		// Detach from shared memory, and clear the address.
+		// Detach from shared memory.
 		shmdt(info->shmaddr);
-		info->shmaddr = NULL;
 
 		// Try to lock to check if another process is using the memory.
 		if (flshm_lock(info)) {
@@ -454,21 +442,17 @@ void flshm_close(flshm_info * info) {
 			flshm_unlock(info);
 		}
 
-		// Close the shared memory, and clear the id.
+		// Close the shared memory.
 		close(info->shm);
-		info->shm = -1;
 
+		// Close semaphore.
 		#if __APPLE__
-			// Close the semaphore and null it.
 			sem_close(info->sem);
-			info->sem = NULL;
 		#else
-			// Clear the semaphore id.
-			info->sem = -1;
+			// Nothing to close here.
 		#endif
 	#endif
 
-	// Free the memory for the info.
 	free(info);
 }
 
