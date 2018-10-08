@@ -3,6 +3,11 @@
 Flash Player LocalConnection Shared Memory Native Code Library
 
 
+# NOTE: Version 2 Branch (Under Development)
+
+This branch contains the code that is being updated for the future version 2 of this library, with a simpler API, a cmake build system, and better testing with continuous integration.
+
+
 ## Overview
 
 This library is a native code library for connecting to the LocalConnection API used by Flash Player. This is done by connecting to the same shared memory and semaphores, to read and write to the messaging system. All of this was made possible by reverse engineering the API's and messaging formats used by Flash Player.
@@ -12,7 +17,7 @@ This library is a native code library for connecting to the LocalConnection API 
 
 The library was tested against Flash Player 6 and up (Flash Player 6 introduced LocalConnection), and Flash Player on Windows, Mac, and Linux are all supported.
 
-This library has been tested against the compilers Clang, GCC, and MinGW, but the source files should work with other compatible compilers.
+This library is tested against the compilers Clang, GCC, MSVC, and MinGW. See Travis and AppVeyor CI configuration for exact versions that are tested against. The library will likely also work with other compatible C99 compilers.
 
 
 ## Usage
