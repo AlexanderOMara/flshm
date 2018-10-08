@@ -6,7 +6,6 @@ Flash Player LocalConnection Shared Memory Native Code Library
 [![appveyor](https://ci.appveyor.com/api/projects/status/hhaql6sq0dmo2nvo/branch/master?svg=true)](https://ci.appveyor.com/project/AlexanderOMara/flshm/branch/master)
 
 
-
 # NOTE: Version 2 Branch (Under Development)
 
 This branch contains the code that is being updated for the future version 2 of this library, with a simpler API, a cmake build system, and better testing with continuous integration.
