@@ -318,6 +318,7 @@ flshm_keys * flshm_keys_create(bool is_per_user) {
 	return keys;
 }
 
+
 void flshm_keys_destroy(flshm_keys * keys) {
 	free(keys);
 }
@@ -585,6 +586,7 @@ flshm_connected flshm_connection_list(flshm_info * info) {
 				connection.name = NULL;
 				connection.version = FLSHM_VERSION_1;
 				connection.sandbox = FLSHM_SECURITY_NONE;
+
 				// Stop if reached the maximum connections.
 				if (connected.count >= FLSHM_CONNECTIONS_MAX_COUNT) {
 					break;
@@ -1115,6 +1117,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 
 	return success;
 }
+
 
 void flshm_message_clear(flshm_info * info) {
 	// Pointer to shared memory.
