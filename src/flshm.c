@@ -297,7 +297,7 @@ flshm_keys * flshm_keys_create(bool is_per_user) {
 		if (is_per_user) {
 			// The isPerUser generated keys.
 			uint32_t shm = flshm_hash_uid(getuid());
-			sprintf(keys->sem, "%u", shm);
+			snprintf(keys->sem, 20, "%u", shm);
 			keys->shm = (key_t)shm;
 		}
 		else {
