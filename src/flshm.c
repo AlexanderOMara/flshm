@@ -1039,7 +1039,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 	}
 
 	// The buffer to encode message into.
-	char * buffer[FLSHM_MESSAGE_MAX_SIZE];
+	char buffer[FLSHM_MESSAGE_MAX_SIZE];
 
 	// Start a block that can be broken from, assume failure on break.
 	bool success = false;
@@ -1052,7 +1052,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 		// Write the connection name or fail.
 		wr = flshm_amf0_write_string(
 			message->name,
-			buffer[i],
+			buffer + i,
 			max - i
 		);
 		if (!wr) {
@@ -1063,7 +1063,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 		// Write the connection host or fail.
 		wr = flshm_amf0_write_string(
 			message->host,
-			buffer[i],
+			buffer + i,
 			max - i
 		);
 		if (!wr) {
@@ -1076,7 +1076,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 			// Write sandboxed or fail.
 			wr = flshm_amf0_write_boolean(
 				message->sandboxed,
-				buffer[i],
+				buffer + i,
 				max - i
 			);
 			if (!wr) {
@@ -1087,7 +1087,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 			// Write HTTPS or fail.
 			wr = flshm_amf0_write_boolean(
 				message->https,
-				buffer[i],
+				buffer + i,
 				max - i
 			);
 			if (!wr) {
@@ -1100,7 +1100,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 				// Write sandbox or fail.
 				wr = flshm_amf0_write_double(
 					(double)message->sandbox,
-					buffer[i],
+					buffer + i,
 					max - i
 				);
 				if (!wr) {
@@ -1111,7 +1111,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 				// Write version or fail.
 				wr = flshm_amf0_write_double(
 					(double)message->swfv,
-					buffer[i],
+					buffer + i,
 					max - i
 				);
 				if (!wr) {
@@ -1126,7 +1126,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 				) {
 					wr = flshm_amf0_write_string(
 						message->filepath,
-						buffer[i],
+						buffer + i,
 						max - i
 					);
 					if (!wr) {
@@ -1140,7 +1140,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 					// Write the AMF version or fail.
 					wr = flshm_amf0_write_double(
 						(double)message->amfv,
-						buffer[i],
+						buffer + i,
 						max - i
 					);
 					if (!wr) {
@@ -1154,7 +1154,7 @@ bool flshm_message_write(flshm_message * message, flshm_info * info) {
 		// Write method or fail.
 		wr = flshm_amf0_write_string(
 			message->method,
-			buffer[i],
+			buffer + i,
 			max - i
 		);
 		if (!wr) {

@@ -222,7 +222,7 @@ int main(int argc, char ** argv) {
 					// Create a buffer for the data, and write to it.
 					uint32_t size = flshm_amf0_write_string(
 						msgstr,
-						(char *)&response->data,
+						response->data,
 						FLSHM_MESSAGE_MAX_SIZE
 					);
 					if (size) {
