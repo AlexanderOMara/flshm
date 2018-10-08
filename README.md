@@ -2,6 +2,10 @@
 
 Flash Player LocalConnection Shared Memory Native Code Library
 
+[![travis-ci](https://travis-ci.org/AlexanderOMara/flshm.svg?branch=master)](https://travis-ci.org/AlexanderOMara/flshm)
+[![appveyor](https://ci.appveyor.com/api/projects/status/hhaql6sq0dmo2nvo/branch/master?svg=true)](https://ci.appveyor.com/project/AlexanderOMara/flshm/branch/master)
+
+
 
 # NOTE: Version 2 Branch (Under Development)
 
