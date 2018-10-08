@@ -330,42 +330,33 @@ flshm_info * flshm_open(flshm_keys * keys) {
 	}
 
 	#ifdef _WIN32
-		// First try to open the semaphore.
+		// Open semaphore.
 		HANDLE sem = OpenMutex(MUTEX_ALL_ACCESS, FALSE, keys->sem);
-		if (sem == NULL) {
-			free(info);
-			return NULL;
-		}
 
-		// Next try to open the shared memory.
+		// Open the shared memory.
 		HANDLE shm = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, keys->shm);
-		if (shm == NULL) {
-			free(info);
-			CloseHandle(sem);
-			return NULL;
-		}
 
-		// Finally try to attach to the shared memory.
-		LPVOID shmaddr = MapViewOfFile(
+		// Attach to shared memory.
+		LPVOID shmaddr = shm ? MapViewOfFile(
 			shm,
 			FILE_MAP_ALL_ACCESS,
 			0,
 			0,
 			FLSHM_SIZE
-		);
-		if (shmaddr == NULL) {
-			free(info);
-			CloseHandle(shm);
-			CloseHandle(sem);
-			return NULL;
-		}
+		) : NULL;
 
-		// Check that the memory has already been initialized.
-		if (!flshm_shm_inited(shmaddr)) {
+		// Cleanup if any failed.
+		if (!sem || !shm || !shmaddr || !flshm_shm_inited(shmaddr)) {
+			if (shmaddr) {
+				UnmapViewOfFile(shmaddr);
+			}
+			if (shm) {
+				CloseHandle(shm);
+			}
+			if (sem) {
+				CloseHandle(sem);
+			}
 			free(info);
-			UnmapViewOfFile(shmaddr);
-			CloseHandle(shm);
-			CloseHandle(sem);
 			return NULL;
 		}
 
@@ -374,80 +365,50 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		info->sem = sem;
 		info->shm = shm;
 		info->shmaddr = shmaddr;
-	#elif __APPLE__
-		// First try to open the semaphore.
-		sem_t * semdesc = sem_open(keys->sem, 0);
-		if (semdesc == SEM_FAILED) {
-			free(info);
-			return NULL;
-		}
-
-		// Next try to open the shared memory.
-		int shmid = shmget(keys->shm, FLSHM_SIZE, 0);
-		if (shmid == -1) {
-			free(info);
-			sem_close(semdesc);
-			return NULL;
-		}
-
-		// Finally try to attach to the shared memory.
-		void * shmaddr = shmat(shmid, NULL, 0);
-		if (shmaddr == (void *)-1) {
-			free(info);
-			close(shmid);
-			sem_close(semdesc);
-			return NULL;
-		}
-
-		// Check that the memory has already been initialized.
-		if (!flshm_shm_inited(shmaddr)) {
-			free(info);
-			shmdt(shmaddr);
-			close(shmid);
-			sem_close(semdesc);
-			return NULL;
-		}
-
-		// Everything we need, create info data.
-		info->data = (void *)shmaddr;
-		info->semdesc = semdesc;
-		info->shmid = shmid;
-		info->shmaddr = shmaddr;
 	#else
-		// First try to open the semaphore.
-		int semid = semget(keys->sem, 1, 0);
-		if (semid == -1) {
-			free(info);
-			return NULL;
-		}
+		void * badptr = (void *)-1;
+		bool semopen;
 
-		// Next try to open the shared memory.
-		int shmid = shmget(keys->shm, FLSHM_SIZE, 0);
-		if (shmid == -1) {
-			free(info);
-			return NULL;
-		}
+		// Open semaphore.
+		#if __APPLE__
+			sem_t * sem = sem_open(keys->sem, 0);
+			semopen = sem != SEM_FAILED;
+		#else
+			int sem = semget(keys->sem, 1, 0);
+			semopen = sem == -1;
+		#endif
 
-		// Finally try to attach to the shared memory.
-		void * shmaddr = shmat(shmid, NULL, 0);
-		if (shmaddr == (void *)-1) {
-			free(info);
-			close(shmid);
-			return NULL;
-		}
+		// Open the shared memory.
+		int shm = shmget(keys->shm, FLSHM_SIZE, 0);
+		bool shmgot = shm != -1;
 
-		// Check that the memory has already been initialized.
-		if (!flshm_shm_inited(shmaddr)) {
+		// Attach to shared memory.
+		void * shmaddr = shmgot ? shmat(shm, NULL, 0) : badptr;
+		bool shmopen = shmaddr != badptr;
+
+		// Cleanup if any failed.
+		if (!semopen || !shmgot || !shmopen || !flshm_shm_inited(shmaddr)) {
+			if (shmopen) {
+				shmdt(shmaddr);
+			}
+			if (shmgot) {
+				close(shm);
+			}
+			if (semopen) {
+				#if __APPLE__
+					sem_close(sem);
+				#else
+					close(sem);
+				#endif
+			}
 			free(info);
-			shmdt(shmaddr);
-			close(shmid);
 			return NULL;
 		}
 
 		// Everything we need, create info data.
 		info->data = (void *)shmaddr;
-		info->semid = semid;
-		info->shmid = shmid;
+		info->sem = sem;
+		info->shm = shm;
 		info->shmaddr = shmaddr;
 	#endif
 
@@ -472,34 +433,6 @@ void flshm_close(flshm_info * info) {
 		// Close the semaphore and null it.
 		CloseHandle(info->sem);
 		info->sem = NULL;
-	#elif __APPLE__
-		// Detach from shared memory, and clear the address.
-		shmdt(info->shmaddr);
-		info->shmaddr = NULL;
-
-		// Try to lock to check if another process is using the memory.
-		if (flshm_lock(info)) {
-			// Check how many processes are connect to the shared memory.
-			struct shmid_ds ds;
-			shmctl(info->shmid, IPC_STAT, &ds);
-
-			// If no open connection, then remove shared memory.
-			if (!ds.shm_nattch) {
-				// Delete the shared memory.
-				shmctl(info->shmid, IPC_RMID, &ds);
-			}
-
-			// Unlock and continue closing.
-			flshm_unlock(info);
-		}
-
-		// Close the shared memory, and clear the id.
-		close(info->shmid);
-		info->shmid = 0;
-
-		// Close the semaphore and null it.
-		sem_close(info->semdesc);
-		info->semdesc = NULL;
 	#else
 		// Detach from shared memory, and clear the address.
 		shmdt(info->shmaddr);
@@ -509,12 +442,12 @@ void flshm_close(flshm_info * info) {
 		if (flshm_lock(info)) {
 			// Check how many processes are connect to the shared memory.
 			struct shmid_ds ds;
-			shmctl(info->shmid, IPC_STAT, &ds);
+			shmctl(info->shm, IPC_STAT, &ds);
 
 			// If no open connection, then remove shared memory.
 			if (!ds.shm_nattch) {
 				// Delete the shared memory.
-				shmctl(info->shmid, IPC_RMID, &ds);
+				shmctl(info->shm, IPC_RMID, &ds);
 			}
 
 			// Unlock and continue closing.
@@ -522,11 +455,17 @@ void flshm_close(flshm_info * info) {
 		}
 
 		// Close the shared memory, and clear the id.
-		close(info->shmid);
-		info->shmid = 0;
+		close(info->shm);
+		info->shm = -1;
 
-		// Clear the semaphore id.
-		info->semid = 0;
+		#if __APPLE__
+			// Close the semaphore and null it.
+			sem_close(info->sem);
+			info->sem = NULL;
+		#else
+			// Clear the semaphore id.
+			info->sem = -1;
+		#endif
 	#endif
 
 	// Free the memory for the info.
@@ -538,13 +477,13 @@ bool flshm_lock(flshm_info * info) {
 	#ifdef _WIN32
 		return WaitForSingleObject(info->sem, INFINITE) == WAIT_OBJECT_0;
 	#elif __APPLE__
-		return !sem_wait(info->semdesc);
+		return !sem_wait(info->sem);
 	#else
 		struct sembuf sb;
 		sb.sem_num = 0;
 		sb.sem_op = -1;
 		sb.sem_flg = SEM_UNDO;
-		return !semop(info->semid, &sb, 1);
+		return !semop(info->sem, &sb, 1);
 	#endif
 }
 
@@ -553,13 +492,13 @@ bool flshm_unlock(flshm_info * info) {
 	#ifdef _WIN32
 		return ReleaseMutex(info->sem) == TRUE;
 	#elif __APPLE__
-		return !sem_post(info->semdesc);
+		return !sem_post(info->sem);
 	#else
 		struct sembuf sb;
 		sb.sem_num = 0;
 		sb.sem_op = 1;
 		sb.sem_flg = SEM_UNDO;
-		return !semop(info->semid, &sb, 1);
+		return !semop(info->sem, &sb, 1);
 	#endif
 }
 

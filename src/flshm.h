@@ -166,12 +166,12 @@ typedef struct flshm_info {
 		HANDLE shm;
 		LPVOID shmaddr;
 	#elif __APPLE__
-		sem_t * semdesc;
-		int shmid;
+		sem_t * sem;
+		int shm;
 		void * shmaddr;
 	#else
-		int semid;
-		int shmid;
+		int sem;
+		int shm;
 		void * shmaddr;
 	#endif
 } flshm_info;
