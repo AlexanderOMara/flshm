@@ -72,20 +72,20 @@ int main(int argc, char ** argv) {
 	}
 
 	// Create message.
-	flshm_message * message = flshm_message_create();
-	message->tick = tick;
-	strcpy(message->name, name);
-	strcpy(message->host, host);
-	message->version = version;
-	message->sandboxed = sandboxed;
-	message->https = https;
-	message->sandbox = sandbox;
-	message->swfv = swfv;
-	strcpy(message->filepath, filepath);
-	message->amfv = amfv;
-	strcpy(message->method, method);
-	message->size = (uint32_t)size;
-	memcpy(message->data, data, size);
+	flshm_message message;
+	message.tick = tick;
+	strcpy(message.name, name);
+	strcpy(message.host, host);
+	message.version = version;
+	message.sandboxed = sandboxed;
+	message.https = https;
+	message.sandbox = sandbox;
+	message.swfv = swfv;
+	strcpy(message.filepath, filepath);
+	message.amfv = amfv;
+	strcpy(message.method, method);
+	message.size = (uint32_t)size;
+	memcpy(message.data, data, size);
 
 	flshm_keys * keys = flshm_keys_create(false);
 	flshm_info * info = flshm_open(keys);
@@ -100,16 +100,13 @@ int main(int argc, char ** argv) {
 	// Lock memory, to avoid race conditions.
 	flshm_lock(info);
 
-	if (!flshm_message_write(info, message)) {
+	if (!flshm_message_write(info, &message)) {
 		printf("FAILED: flshm_message_write\n");
 		ret = EXIT_FAILURE;
 	}
 
 	// Unlock memory.
 	flshm_unlock(info);
-
-	// Cleanup message.
-	flshm_message_destroy(message);
 
 	// Close info.
 	flshm_close(info);

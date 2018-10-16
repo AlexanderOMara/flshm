@@ -16,15 +16,14 @@ int main() {
 
 	int ret = EXIT_SUCCESS;
 
-	// Create message.
-	flshm_message * message = flshm_message_create();
+	flshm_message message;
 
 	// Lock memory, to avoid race conditions.
 	flshm_lock(info);
 
 	// Read message.
-	if (flshm_message_read(info, message)) {
-		dump_msg(message);
+	if (flshm_message_read(info, &message)) {
+		dump_msg(&message);
 	}
 	else {
 		printf("FAILED: flshm_message_read\n");
@@ -33,9 +32,6 @@ int main() {
 
 	// Unlock memory.
 	flshm_unlock(info);
-
-	// Cleanup message.
-	flshm_message_destroy(message);
 
 	// Close info.
 	flshm_close(info);

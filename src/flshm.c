@@ -722,33 +722,6 @@ uint32_t flshm_message_tick(flshm_info * info) {
 }
 
 
-flshm_message * flshm_message_create() {
-	flshm_message * message = malloc(sizeof(flshm_message));
-	if (!message) {
-		return NULL;
-	}
-	message->tick = 0;
-	message->amfl = 0;
-	message->name[0] = '\0';
-	message->host[0] = '\0';
-	message->version = FLSHM_VERSION_1;
-	message->sandboxed = false;
-	message->https = false;
-	message->sandbox = FLSHM_SECURITY_NONE;
-	message->swfv = 0;
-	message->filepath[0] = '\0';
-	message->amfv = FLSHM_AMF0;
-	message->method[0] = '\0';
-	message->size = 0;
-	return message;
-}
-
-
-void flshm_message_destroy(flshm_message * message) {
-	free(message);
-}
-
-
 bool flshm_message_read(flshm_info * info, flshm_message * message) {
 	// All the properties to be set.
 	uint32_t tick;

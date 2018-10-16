@@ -15,8 +15,8 @@ static flshm_keys * keys = NULL;
 static flshm_info * info = NULL;
 static flshm_connection connection;
 static bool locked = false;
-static flshm_message * message = NULL;
-static flshm_message * response = NULL;
+static flshm_message message;
+static flshm_message response;
 static char filepath_append[] = ".chatbot.swf";
 
 static void filepath_create(char * dest, char * src) {
@@ -43,14 +43,6 @@ static void cleanup(void) {
 			flshm_connection_remove(info, &connection);
 		}
 		flshm_unlock(info);
-	}
-	if (response) {
-		flshm_message_destroy(response);
-		response = NULL;
-	}
-	if (message) {
-		flshm_message_destroy(message);
-		message = NULL;
 	}
 	if (info) {
 		flshm_close(info);
@@ -136,9 +128,6 @@ int main(int argc, char ** argv) {
 	}
 	flshm_unlock(info);
 
-	message = flshm_message_create();
-	response = flshm_message_create();
-
 	char msgstr[FLSHM_AMF0_STRING_MAX_SIZE];
 
 	printf("Chatbot runnning...\n");
@@ -150,22 +139,22 @@ int main(int argc, char ** argv) {
 		locked = true;
 
 		// Read message if present.
-		if (flshm_message_read(info, message)) {
+		if (flshm_message_read(info, &message)) {
 			// Check that this message is intended for this.
-			if (!strcmp(connection_name_self, message->name)) {
+			if (!strcmp(connection_name_self, message.name)) {
 				// Clear the message from the memory.
 				flshm_message_clear(info);
 
 				// Show debug info for the message.
 				if (debug) {
-					dump_msg(message);
+					dump_msg(&message);
 				}
 
 				// Read the data as AMF0 string if possible.
 				if (flshm_amf0_read_string(
 					msgstr,
-					message->data,
-					message->size
+					message.data,
+					message.size
 				)) {
 					// Print the parsed string.
 					printf("Received: %s\n", msgstr);
@@ -178,39 +167,39 @@ int main(int argc, char ** argv) {
 					do {
 						tick = flshm_tick();
 					}
-					while (tick == message->tick);
+					while (tick == message.tick);
 
 					// Create a buffer for the data, and write to it.
 					uint32_t size = flshm_amf0_write_string(
 						msgstr,
-						response->data,
+						response.data,
 						FLSHM_MESSAGE_MAX_SIZE
 					);
 					if (size) {
 						// Create the response data, mimick sender.
-						response->tick = tick;
-						strcpy(response->name, connection_name_peer);
-						strcpy(response->host, message->host);
-						response->version = message->version;
-						response->sandboxed = message->sandboxed;
-						response->https = message->https;
-						response->sandbox = message->sandbox;
-						response->swfv = message->swfv;
-						filepath_create(response->filepath, message->filepath);
-						response->amfv = FLSHM_AMF0;
-						strcpy(response->method, message->method);
-						response->size = size;
+						response.tick = tick;
+						strcpy(response.name, connection_name_peer);
+						strcpy(response.host, message.host);
+						response.version = message.version;
+						response.sandboxed = message.sandboxed;
+						response.https = message.https;
+						response.sandbox = message.sandbox;
+						response.swfv = message.swfv;
+						filepath_create(response.filepath, message.filepath);
+						response.amfv = FLSHM_AMF0;
+						strcpy(response.method, message.method);
+						response.size = size;
 
 						// Write the message to shared memory.
 						// In theory, should poll the tick to ensure is read.
 						// If not read in set timout, then erase to free.
-						if (!flshm_message_write(info, response)) {
+						if (!flshm_message_write(info, &response)) {
 							printf("FAILED: flshm_message_write\n");
 						}
 
 						// Show debug info for the response.
 						if (debug) {
-							dump_msg(response);
+							dump_msg(&response);
 						}
 
 						// Print the response string.

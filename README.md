@@ -44,7 +44,7 @@ See the `util` directory for some sample usage. Some things to keep in mind.
  - Sandboxing is not implemented in the library itself, so validate the message before handling it.
  - Clear a message when received, and intended for the connection, else it will timeout and the connection will be removed from the registered list.
  - Use the `flshm_lock` and `flshm_unlock` functions to lock the semaphore for exclusive access to the shared memory while reading and writing messages and connections to avoid problems with race conditions.
- - Use the `flshm_close` and `flshm_message_destroy` functions to free memory allocated by the library, and avoid memory leaks.
+ - Use the `flshm_close` to free memory allocated by the library, and avoid memory leaks.
 
 
 ## Bugs
