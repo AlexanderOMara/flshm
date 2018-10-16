@@ -17,7 +17,7 @@ int main() {
 	// Lock memory, to avoid race conditions.
 	flshm_lock(info);
 
-	flshm_connection_list(&connected, info);
+	flshm_connection_list(info, &connected);
 	printf("Connections: %i\n", connected.count);
 	for (uint32_t i = 0; i < connected.count; i++) {
 		flshm_connection c = connected.connections[i];

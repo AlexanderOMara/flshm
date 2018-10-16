@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
 
 	int ret = EXIT_SUCCESS;
 
-	if (!flshm_connection_remove(&connection, info)) {
+	if (!flshm_connection_remove(info, &connection)) {
 		ret = EXIT_FAILURE;
 	}
 

@@ -23,7 +23,7 @@ int main() {
 	flshm_lock(info);
 
 	// Read message.
-	if (flshm_message_read(message, info)) {
+	if (flshm_message_read(info, message)) {
 		printf(
 			"Message:\n"
 			"    tick: %u\n"

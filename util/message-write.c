@@ -115,7 +115,7 @@ int main(int argc, char ** argv) {
 	// Lock memory, to avoid race conditions.
 	flshm_lock(info);
 
-	if (!flshm_message_write(message, info)) {
+	if (!flshm_message_write(info, message)) {
 		printf("FAILED: flshm_message_write\n");
 		ret = EXIT_FAILURE;
 	}

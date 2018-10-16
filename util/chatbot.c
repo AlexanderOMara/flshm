@@ -93,7 +93,7 @@ static void cleanup(void) {
 	if (info) {
 		if (!locked) {
 			flshm_lock(info);
-			flshm_connection_remove(&connection, info);
+			flshm_connection_remove(info, &connection);
 		}
 		flshm_unlock(info);
 	}
@@ -172,7 +172,7 @@ int main(int argc, char ** argv) {
 
 	// Register the connection name or fail.
 	flshm_lock(info);
-	if (!flshm_connection_add(&connection, info)) {
+	if (!flshm_connection_add(info, &connection)) {
 		printf("FAILED: flshm_connection_add\n");
 		flshm_unlock(info);
 		flshm_close(info);
@@ -194,7 +194,7 @@ int main(int argc, char ** argv) {
 		locked = true;
 
 		// Read message if present.
-		if (flshm_message_read(message, info)) {
+		if (flshm_message_read(info, message)) {
 			// Check that this message is intended for this.
 			if (!strcmp(connection_name_self, message->name)) {
 				// Clear the message from the memory.
@@ -248,7 +248,7 @@ int main(int argc, char ** argv) {
 						// Write the message to shared memory.
 						// In theory, should poll the tick to ensure is read.
 						// If not read in set timout, then erase to free.
-						if (!flshm_message_write(response, info)) {
+						if (!flshm_message_write(info, response)) {
 							printf("FAILED: flshm_message_write\n");
 						}
 

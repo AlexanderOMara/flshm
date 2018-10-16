@@ -523,7 +523,7 @@ bool flshm_connection_name_valid(const char * name) {
 }
 
 
-void flshm_connection_list(flshm_connected * list, flshm_info * info) {
+void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 	list->count = 0;
 
 	char * name = NULL;
@@ -616,7 +616,7 @@ void flshm_connection_list(flshm_connected * list, flshm_info * info) {
 }
 
 
-bool flshm_connection_add(flshm_connection * connection, flshm_info * info) {
+bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 	// Validate the connection name.
 	if (!flshm_connection_name_valid(connection->name)) {
 		return false;
@@ -633,7 +633,7 @@ bool flshm_connection_add(flshm_connection * connection, flshm_info * info) {
 
 	// Get the current connections.
 	flshm_connected connected;
-	flshm_connection_list(&connected, info);
+	flshm_connection_list(info, &connected);
 
 	// Fail if maxed out on connections.
 	if (connected.count >= FLSHM_CONNECTIONS_MAX_COUNT) {
@@ -680,10 +680,10 @@ bool flshm_connection_add(flshm_connection * connection, flshm_info * info) {
 }
 
 
-bool flshm_connection_remove(flshm_connection * connection, flshm_info * info) {
+bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
 	// Get the current connections.
 	flshm_connected connected;
-	flshm_connection_list(&connected, info);
+	flshm_connection_list(info, &connected);
 
 	// Get the offset of connection list.
 	char * addr = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
@@ -749,7 +749,7 @@ void flshm_message_destroy(flshm_message * message) {
 }
 
 
-bool flshm_message_read(flshm_message * message, flshm_info * info) {
+bool flshm_message_read(flshm_info * info, flshm_message * message) {
 	// All the properties to be set.
 	uint32_t tick;
 	uint32_t amfl;
@@ -929,7 +929,7 @@ bool flshm_message_read(flshm_message * message, flshm_info * info) {
 }
 
 
-bool flshm_message_write(flshm_message * message, flshm_info * info) {
+bool flshm_message_write(flshm_info * info, flshm_message * message) {
 	// Validate tick is non-0.
 	if (!message->tick) {
 		return false;

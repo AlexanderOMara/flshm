@@ -379,18 +379,18 @@ bool flshm_connection_name_valid(const char * name);
 /**
  * List all registered connecitons.
  */
-void flshm_connection_list(flshm_connected * list, flshm_info * info);
+void flshm_connection_list(flshm_info * info, flshm_connected * list);
 
 /**
  * Add a connection to the list of registered connections.
  */
-bool flshm_connection_add(flshm_connection * connection, flshm_info * info);
+bool flshm_connection_add(flshm_info * info, flshm_connection * connection);
 
 
 /**
  * Remove a connection from the list of registerd connections.
  */
-bool flshm_connection_remove(flshm_connection * connection, flshm_info * info);
+bool flshm_connection_remove(flshm_info * info, flshm_connection * connection);
 
 
 /**
@@ -415,13 +415,13 @@ void flshm_message_destroy(flshm_message * message);
 /**
  * Read a message from shared memory.
  */
-bool flshm_message_read(flshm_message * message, flshm_info * info);
+bool flshm_message_read(flshm_info * info, flshm_message * message);
 
 
 /**
  * Write a message to shared memory.
  */
-bool flshm_message_write(flshm_message * message, flshm_info * info);
+bool flshm_message_write(flshm_info * info, flshm_message * message);
 
 
 /**
