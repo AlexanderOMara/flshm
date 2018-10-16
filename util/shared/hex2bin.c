@@ -10,6 +10,9 @@ char * hex2bin(char * hex, size_t * len) {
 	}
 	size_t bin_len = len_hex / 2;
 	char * bin = malloc(bin_len);
+	if (!bin) {
+		return NULL;
+	}
 	for (size_t i = 0; i < bin_len; i++) {
 		unsigned int c;
 		sscanf(hex + (i * 2), "%02x", &c);
