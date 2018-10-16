@@ -12,6 +12,3 @@ Thumbs.db
 *.swf
 *.pp
 /build*
-
-# Project files.
-.clang_complete
