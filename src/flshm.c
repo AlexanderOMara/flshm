@@ -5,20 +5,20 @@
 
 #ifdef _WIN32
 	#include <windows.h>
-#elif __APPLE__
-	#include <unistd.h>
-	#include <sys/types.h>
-	#include <sys/shm.h>
-	#include <semaphore.h>
-	#include <mach/mach_time.h>
 #else
 	#include <unistd.h>
 	#include <sys/types.h>
 	#include <sys/shm.h>
-	#include <sys/ipc.h>
-	#include <sys/sem.h>
-	#include <sys/time.h>
-	#include <sys/sysinfo.h>
+
+	#ifdef __APPLE__
+		#include <semaphore.h>
+		#include <mach/mach_time.h>
+	#else
+		#include <sys/ipc.h>
+		#include <sys/sem.h>
+		#include <sys/time.h>
+		#include <sys/sysinfo.h>
+	#endif
 #endif
 
 #include "flshm.h"
