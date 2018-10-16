@@ -12,25 +12,25 @@ int main(int argc, char ** argv) {
 
 	// Open the shared memory.
 	flshm_keys * keys = flshm_keys_create(false);
-	flshm_info * info = flshm_open(keys);
+	flshm_info info;
 
 	// Check if opened successfully.
-	if (!info) {
+	if (!flshm_open(&info, keys)) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;
 	}
 
 	// Lock memory, to avoid race conditions.
-	flshm_lock(info);
+	flshm_lock(&info);
 
 	// Dump memory.
-	dump_hex(info->shmaddr, FLSHM_SIZE, skip_null);
+	dump_hex(info.shmaddr, FLSHM_SIZE, skip_null);
 
 	// Unlock memory.
-	flshm_unlock(info);
+	flshm_unlock(&info);
 
 	// Close info.
-	flshm_close(info);
+	flshm_close(&info);
 
 	// Cleanup memory.
 	flshm_keys_destroy(keys);

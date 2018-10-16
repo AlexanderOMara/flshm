@@ -6,24 +6,23 @@
 #include <hex2bin.h>
 
 int main(int argc, char ** argv) {
-	char usage[] =
-		"%s "
-		"tick "
-		"name "
-		"host "
-		"version "
-		"sandboxed "
-		"https "
-		"sandbox "
-		"swfv "
-		"filepath "
-		"amfv "
-		"method "
-		"size "
-		"data\n";
-
 	if (argc < 13) {
-		printf(usage, argv[0]);
+		printf("%s "
+			"tick "
+			"name "
+			"host "
+			"version "
+			"sandboxed "
+			"https "
+			"sandbox "
+			"swfv "
+			"filepath "
+			"amfv "
+			"method "
+			"size "
+			"data\n",
+			argv[0]
+		);
 		return EXIT_FAILURE;
 	}
 
@@ -88,9 +87,9 @@ int main(int argc, char ** argv) {
 	memcpy(message.data, data, size);
 
 	flshm_keys * keys = flshm_keys_create(false);
-	flshm_info * info = flshm_open(keys);
+	flshm_info info;
 
-	if (!info) {
+	if (!flshm_open(&info, keys)) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;
 	}
@@ -98,18 +97,18 @@ int main(int argc, char ** argv) {
 	int ret = EXIT_SUCCESS;
 
 	// Lock memory, to avoid race conditions.
-	flshm_lock(info);
+	flshm_lock(&info);
 
-	if (!flshm_message_write(info, &message)) {
+	if (!flshm_message_write(&info, &message)) {
 		printf("FAILED: flshm_message_write\n");
 		ret = EXIT_FAILURE;
 	}
 
 	// Unlock memory.
-	flshm_unlock(info);
+	flshm_unlock(&info);
 
 	// Close info.
-	flshm_close(info);
+	flshm_close(&info);
 
 	// Cleanup memory.
 	flshm_keys_destroy(keys);

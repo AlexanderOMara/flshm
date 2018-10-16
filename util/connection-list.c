@@ -5,19 +5,18 @@
 
 int main() {
 	flshm_keys * keys = flshm_keys_create(false);
-	flshm_info * info = flshm_open(keys);
-
+	flshm_info info;
 	flshm_connected connected;
 
-	if (!info) {
+	if (!flshm_open(&info, keys)) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;
 	}
 
 	// Lock memory, to avoid race conditions.
-	flshm_lock(info);
+	flshm_lock(&info);
 
-	flshm_connection_list(info, &connected);
+	flshm_connection_list(&info, &connected);
 	printf("Connections: %i\n", connected.count);
 	for (uint32_t i = 0; i < connected.count; i++) {
 		flshm_connection c = connected.connections[i];
@@ -31,10 +30,10 @@ int main() {
 	}
 
 	// Unlock memory.
-	flshm_unlock(info);
+	flshm_unlock(&info);
 
 	// Close info.
-	flshm_close(info);
+	flshm_close(&info);
 
 	// Cleanup memory.
 	flshm_keys_destroy(keys);

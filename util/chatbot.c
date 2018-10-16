@@ -12,8 +12,9 @@
 #include <strinv.h>
 
 static flshm_keys * keys = NULL;
-static flshm_info * info = NULL;
+static flshm_info info;
 static flshm_connection connection;
+static bool opened = false;
 static bool locked = false;
 static flshm_message message;
 static flshm_message response;
@@ -37,16 +38,14 @@ static void filepath_create(char * dest, char * src) {
 
 static void cleanup(void) {
 	printf("\nCleaning up...\n");
-	if (info) {
+	if (opened) {
 		if (!locked) {
-			flshm_lock(info);
-			flshm_connection_remove(info, &connection);
+			flshm_lock(&info);
 		}
-		flshm_unlock(info);
-	}
-	if (info) {
-		flshm_close(info);
-		info = NULL;
+		flshm_connection_remove(&info, &connection);
+		flshm_unlock(&info);
+		flshm_close(&info);
+		opened = false;
 	}
 	if (keys) {
 		flshm_keys_destroy(keys);
@@ -112,21 +111,21 @@ int main(int argc, char ** argv) {
 	register_shutdown();
 
 	keys = flshm_keys_create(is_per_user);
-	info = flshm_open(keys);
-	if (!info) {
+	opened = flshm_open(&info, keys);
+	if (!opened) {
 		printf("FAILED: flshm_open\n");
+		cleanup();
 		return EXIT_FAILURE;
 	}
 
 	// Register the connection name or fail.
-	flshm_lock(info);
-	if (!flshm_connection_add(info, &connection)) {
+	locked = flshm_lock(&info);
+	if (!flshm_connection_add(&info, &connection)) {
 		printf("FAILED: flshm_connection_add\n");
-		flshm_unlock(info);
-		flshm_close(info);
+		cleanup();
 		return EXIT_FAILURE;
 	}
-	flshm_unlock(info);
+	locked = !flshm_unlock(&info);
 
 	char msgstr[FLSHM_AMF0_STRING_MAX_SIZE];
 
@@ -135,15 +134,14 @@ int main(int argc, char ** argv) {
 	// Run loop.
 	bool running = true;
 	while (running) {
-		flshm_lock(info);
-		locked = true;
+		locked = flshm_lock(&info);
 
 		// Read message if present.
-		if (flshm_message_read(info, &message)) {
+		if (flshm_message_read(&info, &message)) {
 			// Check that this message is intended for this.
 			if (!strcmp(connection_name_self, message.name)) {
 				// Clear the message from the memory.
-				flshm_message_clear(info);
+				flshm_message_clear(&info);
 
 				// Show debug info for the message.
 				if (debug) {
@@ -193,7 +191,7 @@ int main(int argc, char ** argv) {
 						// Write the message to shared memory.
 						// In theory, should poll the tick to ensure is read.
 						// If not read in set timout, then erase to free.
-						if (!flshm_message_write(info, &response)) {
+						if (!flshm_message_write(&info, &response)) {
 							printf("FAILED: flshm_message_write\n");
 						}
 
@@ -209,8 +207,7 @@ int main(int argc, char ** argv) {
 			}
 		}
 
-		flshm_unlock(info);
-		locked = false;
+		locked = !flshm_unlock(&info);
 
 		sleep_ms(100);
 	}

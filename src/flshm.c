@@ -321,11 +321,8 @@ void flshm_keys_destroy(flshm_keys * keys) {
 }
 
 
-flshm_info * flshm_open(flshm_keys * keys) {
-	flshm_info * info = malloc(sizeof(flshm_info));
-	if (!info) {
-		return NULL;
-	}
+bool flshm_open(flshm_info * info, flshm_keys * keys) {
+	bool r;
 
 	#ifdef _WIN32
 		// Open semaphore.
@@ -340,13 +337,12 @@ flshm_info * flshm_open(flshm_keys * keys) {
 			NULL;
 		info->data = info->shmaddr;
 
-		// Cleanup if any failed.
-		if (
-			!info->sem ||
-			!info->shm ||
-			!info->shmaddr ||
-			!flshm_shm_inited(info->data)
-		) {
+		// Check success, cleanup if any failed.
+		r = info->sem &&
+			info->shm &&
+			info->shmaddr &&
+			flshm_shm_inited(info->data);
+		if (!r) {
 			if (info->shmaddr) {
 				UnmapViewOfFile(info->shmaddr);
 			}
@@ -356,8 +352,7 @@ flshm_info * flshm_open(flshm_keys * keys) {
 			if (info->sem) {
 				CloseHandle(info->sem);
 			}
-			free(info);
-			return NULL;
+			return false;
 		}
 	#else
 		bool semopen;
@@ -382,12 +377,11 @@ flshm_info * flshm_open(flshm_keys * keys) {
 		bool shmopen = info->shmaddr != badptr;
 
 		// Cleanup if any failed.
-		if (
-			!semopen ||
-			!shmgot ||
-			!shmopen ||
-			!flshm_shm_inited(info->data)
-		) {
+		r = semopen &&
+			shmgot &&
+			shmopen &&
+			flshm_shm_inited(info->data);
+		if (!r) {
 			if (shmopen) {
 				shmdt(info->shmaddr);
 			}
@@ -401,12 +395,11 @@ flshm_info * flshm_open(flshm_keys * keys) {
 					close(info->sem);
 				#endif
 			}
-			free(info);
-			return NULL;
+			return false;
 		}
 	#endif
 
-	return info;
+	return r;
 }
 
 
@@ -448,8 +441,6 @@ void flshm_close(flshm_info * info) {
 			// Nothing to close here.
 		#endif
 	#endif
-
-	free(info);
 }
 
 

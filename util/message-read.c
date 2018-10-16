@@ -7,9 +7,9 @@
 
 int main() {
 	flshm_keys * keys = flshm_keys_create(false);
-	flshm_info * info = flshm_open(keys);
+	flshm_info info;
 
-	if (!info) {
+	if (!flshm_open(&info, keys)) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;
 	}
@@ -19,10 +19,10 @@ int main() {
 	flshm_message message;
 
 	// Lock memory, to avoid race conditions.
-	flshm_lock(info);
+	flshm_lock(&info);
 
 	// Read message.
-	if (flshm_message_read(info, &message)) {
+	if (flshm_message_read(&info, &message)) {
 		dump_msg(&message);
 	}
 	else {
@@ -31,10 +31,10 @@ int main() {
 	}
 
 	// Unlock memory.
-	flshm_unlock(info);
+	flshm_unlock(&info);
 
 	// Close info.
-	flshm_close(info);
+	flshm_close(&info);
 
 	// Cleanup memory.
 	flshm_keys_destroy(keys);

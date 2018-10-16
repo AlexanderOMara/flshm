@@ -348,7 +348,7 @@ void flshm_keys_destroy(flshm_keys * keys);
 /**
  * Open the semaphores and shared memory.
  */
-flshm_info * flshm_open(flshm_keys * keys);
+bool flshm_open(flshm_info * info, flshm_keys * keys);
 
 
 /**
