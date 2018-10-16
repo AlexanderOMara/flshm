@@ -527,8 +527,8 @@ void flshm_connection_list(flshm_connected * list, flshm_info * info) {
 	list->count = 0;
 
 	char * name = NULL;
-	flshm_version version;
-	flshm_security sandbox;
+	flshm_version version = FLSHM_VERSION_1;
+	flshm_security sandbox = FLSHM_SECURITY_NONE;
 
 	// Map out the memory, and loop over them.
 	char * memory = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
