@@ -8,6 +8,8 @@
 	#include <sys/select.h>
 #endif
 
+#include "sleep.h"
+
 void sleep_ms(int ms) {
 #ifdef _WIN32
 

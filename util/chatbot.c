@@ -8,62 +8,10 @@
 #include <flshm.h>
 
 #include <hexdump.h>
+#include <msgdump.h>
 #include <sleep.h>
+#include <strinv.h>
 
-void dump_message(flshm_message * message) {
-	printf(
-		"Message:\n"
-		"    tick: %u\n"
-		"    amfl: %u\n"
-		"    name: %s\n"
-		"    host: %s\n"
-		"    version: %i\n"
-		"    sandboxed: %i\n"
-		"    https: %i\n"
-		"    sandbox: %u\n"
-		"    swfv: %u\n"
-		"    filepath: %s\n"
-		"    amfv: %i\n"
-		"    method: %s\n"
-		"    size: %u\n"
-		"    data:\n",
-		message->tick,
-		message->amfl,
-		message->name,
-		message->host,
-		message->version,
-		message->sandboxed,
-		message->https,
-		message->sandbox,
-		message->swfv,
-		message->filepath,
-		message->amfv,
-		message->method,
-		message->size
-	);
-	hexdump(message->data, message->size, 16, 0);
-}
-
-void strinv(char * s) {
-	for (uint32_t i = 0; s[i] != '\0'; i++) {
-		char c = s[i];
-		if (c >= 'a' && c <= 'z') {
-			s[i] = s[i] - 32;
-		}
-		else if (c >= 'A' && c <= 'Z') {
-			s[i] = s[i] + 32;
-		}
-	}
-}
-
-static int signals[] = {
-	SIGABRT,
-	SIGFPE,
-	SIGILL,
-	SIGINT,
-	SIGSEGV,
-	SIGTERM
-};
 static flshm_keys * keys = NULL;
 static flshm_info * info = NULL;
 static flshm_connection connection;
@@ -122,6 +70,15 @@ static void onshutdown(int signo) {
 }
 
 static void register_shutdown() {
+	int signals[] = {
+		SIGABRT,
+		SIGFPE,
+		SIGILL,
+		SIGINT,
+		SIGSEGV,
+		SIGTERM
+	};
+
 	// Register a shutdown handler, to cleanup everything on Ctrl+C etc.
 	for (size_t i = 0; i < (sizeof(signals) / sizeof(int)); i++) {
 		if (signal(signals[i], onshutdown) == SIG_ERR) {
@@ -202,7 +159,7 @@ int main(int argc, char ** argv) {
 
 				// Show debug info for the message.
 				if (debug) {
-					dump_message(message);
+					msgdump(message);
 				}
 
 				// Read the data as AMF0 string if possible.
@@ -254,7 +211,7 @@ int main(int argc, char ** argv) {
 
 						// Show debug info for the response.
 						if (debug) {
-							dump_message(response);
+							msgdump(response);
 						}
 
 						// Print the response string.

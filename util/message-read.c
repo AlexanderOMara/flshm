@@ -4,6 +4,7 @@
 #include <flshm.h>
 
 #include <hexdump.h>
+#include <msgdump.h>
 
 int main() {
 	flshm_keys * keys = flshm_keys_create(false);
@@ -24,37 +25,7 @@ int main() {
 
 	// Read message.
 	if (flshm_message_read(info, message)) {
-		printf(
-			"Message:\n"
-			"    tick: %u\n"
-			"    amfl: %u\n"
-			"    name: %s\n"
-			"    host: %s\n"
-			"    version: %i\n"
-			"    sandboxed: %i\n"
-			"    https: %i\n"
-			"    sandbox: %u\n"
-			"    swfv: %u\n"
-			"    filepath: %s\n"
-			"    amfv: %i\n"
-			"    method: %s\n"
-			"    size: %u\n"
-			"    data:\n",
-			message->tick,
-			message->amfl,
-			message->name,
-			message->host,
-			message->version,
-			message->sandboxed,
-			message->https,
-			message->sandbox,
-			message->swfv,
-			message->filepath,
-			message->amfv,
-			message->method,
-			message->size
-		);
-		hexdump(message->data, message->size, 16, 0);
+		msgdump(message);
 	}
 	else {
 		printf("FAILED: flshm_message_read\n");
