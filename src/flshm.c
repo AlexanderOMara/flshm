@@ -183,26 +183,23 @@ uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
 }
 
 
-char * flshm_write_connection(char * addr, flshm_connection connection) {
+char * flshm_write_connection(char * addr, flshm_connection * connection) {
 	// Copy the name with the null byte into the list and advance past it.
-	uint32_t name_size = (uint32_t)strlen(connection.name);
+	uint32_t name_size = (uint32_t)strlen(connection->name);
 
-	// Only copy name if not pointing to itself.
-	if (addr != connection.name) {
-		strcpy(addr, connection.name);
-	}
+	strcpy(addr, connection->name);
 	addr += name_size + 1;
 
 	// Add the meta data if present, '0' and '1' indexed.
-	if (connection.version != FLSHM_VERSION_1) {
+	if (connection->version != FLSHM_VERSION_1) {
 		*(addr++) = ':';
 		*(addr++) = ':';
-		*(addr++) = (char)((uint8_t)'0' + connection.version);
+		*(addr++) = (char)((uint8_t)'0' + connection->version);
 		*(addr++) = '\0';
-		if (connection.sandbox != FLSHM_SECURITY_NONE) {
+		if (connection->sandbox != FLSHM_SECURITY_NONE) {
 			*(addr++) = ':';
 			*(addr++) = ':';
-			*(addr++) = (char)((uint8_t)'1' + connection.sandbox);
+			*(addr++) = (char)((uint8_t)'1' + connection->sandbox);
 			*(addr++) = '\0';
 		}
 	}
@@ -487,8 +484,8 @@ bool flshm_unlock(flshm_info * info) {
 
 
 bool flshm_connection_name_valid(const char * name) {
-	// First character must not be ':'.
-	if (name[0] == ':') {
+	// First character must not be ':' or null.
+	if (name[0] == ':' || name[0] == '\0') {
 		return false;
 	}
 
@@ -526,16 +523,12 @@ bool flshm_connection_name_valid(const char * name) {
 }
 
 
-flshm_connected flshm_connection_list(flshm_info * info) {
-	// Initialize the connected object.
-	flshm_connected connected;
-	connected.count = 0;
+void flshm_connection_list(flshm_connected * list, flshm_info * info) {
+	list->count = 0;
 
-	// Initialize a connection struct to all empty values.
-	flshm_connection connection;
-	connection.name = NULL;
-	connection.version = FLSHM_VERSION_1;
-	connection.sandbox = FLSHM_SECURITY_NONE;
+	char * name = NULL;
+	flshm_version version;
+	flshm_security sandbox;
 
 	// Map out the memory, and loop over them.
 	char * memory = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
@@ -557,15 +550,15 @@ flshm_connected flshm_connection_list(flshm_info * info) {
 				*(p + 3) == '\0'
 			) {
 				// Check that we are still parsing a connection.
-				if (connection.name) {
+				if (name) {
 					unsigned char c = *(p + 2);
 
 					// Set version then sandbox, '0' then '1' indexed.
-					if (connection.version == FLSHM_VERSION_1) {
-						connection.version = c - (uint8_t)'0';
+					if (version == FLSHM_VERSION_1) {
+						version = c - (uint8_t)'0';
 					}
-					else if (connection.sandbox == FLSHM_SECURITY_NONE) {
-						connection.sandbox = c - (uint8_t)'1';
+					else if (sandbox == FLSHM_SECURITY_NONE) {
+						sandbox = c - (uint8_t)'1';
 					}
 				}
 				i += 3;
@@ -581,14 +574,20 @@ flshm_connected flshm_connection_list(flshm_info * info) {
 		}
 		else {
 			// If currently has an open connection, store it, and reset.
-			if (connection.name) {
-				connected.connections[connected.count++] = connection;
-				connection.name = NULL;
-				connection.version = FLSHM_VERSION_1;
-				connection.sandbox = FLSHM_SECURITY_NONE;
+			if (name) {
+				flshm_connection * con = &list->connections[list->count];
+				strcpy(con->name, name);
+				con->version = version;
+				con->sandbox = sandbox;
+				list->count++;
+
+				// connected.connections[connected.count++] = connection;
+				name = NULL;
+				version = FLSHM_VERSION_1;
+				sandbox = FLSHM_SECURITY_NONE;
 
 				// Stop if reached the maximum connections.
-				if (connected.count >= FLSHM_CONNECTIONS_MAX_COUNT) {
+				if (list->count >= FLSHM_CONNECTIONS_MAX_COUNT) {
 					break;
 				}
 			}
@@ -598,7 +597,7 @@ flshm_connected flshm_connection_list(flshm_info * info) {
 				if (*(memory + i) == '\0') {
 					// If nulled and valid, set name.
 					if (flshm_connection_name_valid(p)) {
-						connection.name = p;
+						name = p;
 					}
 					break;
 				}
@@ -607,36 +606,34 @@ flshm_connected flshm_connection_list(flshm_info * info) {
 	}
 
 	// Store the last connection if not yet stored.
-	if (connection.name) {
-		connected.connections[connected.count++] = connection;
+	if (name) {
+		flshm_connection * con = &list->connections[list->count];
+		strcpy(con->name, name);
+		con->version = version;
+		con->sandbox = sandbox;
+		list->count++;
 	}
-
-	return connected;
 }
 
 
-bool flshm_connection_add(flshm_info * info, flshm_connection connection) {
-	// Sanity check the name.
-	if (!connection.name) {
-		return false;
-	}
-
+bool flshm_connection_add(flshm_connection * connection, flshm_info * info) {
 	// Validate the connection name.
-	if (!flshm_connection_name_valid(connection.name)) {
+	if (!flshm_connection_name_valid(connection->name)) {
 		return false;
 	}
 
 	// Get connection name size.
-	uint32_t name_size = (uint32_t)strlen(connection.name);
+	uint32_t name_size = (uint32_t)strlen(connection->name);
 
 	// Compute size requirements for serialized connection, includes null.
 	uint32_t serialized_size = name_size + 1;
-	if (connection.version != FLSHM_VERSION_1) {
-		serialized_size += connection.sandbox != FLSHM_SECURITY_NONE ? 8 : 4;
+	if (connection->version != FLSHM_VERSION_1) {
+		serialized_size += connection->sandbox != FLSHM_SECURITY_NONE ? 8 : 4;
 	}
 
 	// Get the current connections.
-	flshm_connected connected = flshm_connection_list(info);
+	flshm_connected connected;
+	flshm_connection_list(&connected, info);
 
 	// Fail if maxed out on connections.
 	if (connected.count >= FLSHM_CONNECTIONS_MAX_COUNT) {
@@ -645,7 +642,7 @@ bool flshm_connection_add(flshm_info * info, flshm_connection connection) {
 
 	// Loop over the connections, make sure the name is unique.
 	for (uint32_t i = 0; i < connected.count; i++) {
-		if (!strcmp(connection.name, connected.connections[i].name)) {
+		if (!strcmp(connection->name, connected.connections[i].name)) {
 			return false;
 		}
 	}
@@ -683,9 +680,10 @@ bool flshm_connection_add(flshm_info * info, flshm_connection connection) {
 }
 
 
-bool flshm_connection_remove(flshm_info * info, flshm_connection connection) {
+bool flshm_connection_remove(flshm_connection * connection, flshm_info * info) {
 	// Get the current connections.
-	flshm_connected connected = flshm_connection_list(info);
+	flshm_connected connected;
+	flshm_connection_list(&connected, info);
 
 	// Get the offset of connection list.
 	char * addr = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
@@ -699,16 +697,16 @@ bool flshm_connection_remove(flshm_info * info, flshm_connection connection) {
 		// Check if this is the one to remove.
 		if (
 			!found &&
-			c.version == connection.version &&
-			c.sandbox == connection.sandbox &&
-			!strcmp(c.name, connection.name)
+			c.version == connection->version &&
+			c.sandbox == connection->sandbox &&
+			!strcmp(c.name, connection->name)
 		) {
 			found = true;
 			continue;
 		}
 
 		// Rewrite this connection wherever earlier it may fall.
-		addr = flshm_write_connection(addr, c);
+		addr = flshm_write_connection(addr, &c);
 	}
 
 	// Add list terminating null.

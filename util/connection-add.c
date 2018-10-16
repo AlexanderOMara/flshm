@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <flshm.h>
 
@@ -18,17 +19,13 @@ int main(int argc, char ** argv) {
 	}
 
 	flshm_connection connection;
-	connection.name = argv[1];
-	connection.version = argc > 2 ?
-		argv[2][0] - (uint8_t)'0' :
-		FLSHM_VERSION_1;
-	connection.sandbox = argc > 3 ?
-		argv[3][0] - (uint8_t)'0' :
-		FLSHM_SECURITY_NONE;
+	strcpy(connection.name, argv[1]);
+	connection.version = argc > 2 ? argv[2][0] - '0' : FLSHM_VERSION_1;
+	connection.sandbox = argc > 3 ? argv[3][0] - '0' : FLSHM_SECURITY_NONE;
 
 	int ret = EXIT_SUCCESS;
 
-	if (!flshm_connection_add(info, connection)) {
+	if (!flshm_connection_add(&connection, info)) {
 		ret = EXIT_FAILURE;
 	}
 

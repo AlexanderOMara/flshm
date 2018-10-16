@@ -56,9 +56,17 @@ void strinv(char * s) {
 	}
 }
 
+static int signals[] = {
+	SIGABRT,
+	SIGFPE,
+	SIGILL,
+	SIGINT,
+	SIGSEGV,
+	SIGTERM
+};
 static flshm_keys * keys = NULL;
 static flshm_info * info = NULL;
-static flshm_connection connection = { NULL, 0, 0 };
+static flshm_connection connection;
 static bool locked = false;
 static flshm_message * message = NULL;
 static flshm_message * response = NULL;
@@ -83,9 +91,9 @@ static void filepath_create(char * dest, char * src) {
 static void cleanup(void) {
 	printf("\nCleaning up...\n");
 	if (info) {
-		if (!locked && connection.name) {
+		if (!locked) {
 			flshm_lock(info);
-			flshm_connection_remove(info, connection);
+			flshm_connection_remove(&connection, info);
 		}
 		flshm_unlock(info);
 	}
@@ -111,6 +119,15 @@ static void onshutdown(int signo) {
 	cleanup();
 	printf("Shutting down...\n");
 	exit(signo == SIGINT ? EXIT_SUCCESS : EXIT_FAILURE);
+}
+
+static void register_shutdown() {
+	// Register a shutdown handler, to cleanup everything on Ctrl+C etc.
+	for (size_t i = 0; i < (sizeof(signals) / sizeof(int)); i++) {
+		if (signal(signals[i], onshutdown) == SIG_ERR) {
+			printf("FAILED: signal: %i\n", signals[i]);
+		}
+	}
 }
 
 int main(int argc, char ** argv) {
@@ -140,20 +157,11 @@ int main(int argc, char ** argv) {
 	bool debug = argc < 4 ? false : argv[3][0] == '1';
 	bool is_per_user = argc < 5 ? false : argv[4][0] == '1';
 
-	// Register a shutdown handler, to cleanup everything on Ctrl+C etc.
-	int signals[] = {
-		SIGABRT,
-		SIGFPE,
-		SIGILL,
-		SIGINT,
-		SIGSEGV,
-		SIGTERM
-	};
-	for (size_t i = 0; i < (sizeof(signals) / sizeof(int)); i++) {
-		if (signal(signals[i], onshutdown) == SIG_ERR) {
-			printf("FAILED: signal: %i\n", signals[i]);
-		}
-	}
+	strcpy(connection.name, connection_name_self);
+	connection.version = FLSHM_VERSION_3;
+	connection.sandbox = FLSHM_SECURITY_LOCAL_TRUSTED;
+
+	register_shutdown();
 
 	keys = flshm_keys_create(is_per_user);
 	info = flshm_open(keys);
@@ -164,10 +172,7 @@ int main(int argc, char ** argv) {
 
 	// Register the connection name or fail.
 	flshm_lock(info);
-	connection.name = connection_name_self;
-	connection.version = FLSHM_VERSION_3;
-	connection.sandbox = FLSHM_SECURITY_LOCAL_TRUSTED;
-	if (!flshm_connection_add(info, connection)) {
+	if (!flshm_connection_add(&connection, info)) {
 		printf("FAILED: flshm_connection_add\n");
 		flshm_unlock(info);
 		flshm_close(info);

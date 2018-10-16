@@ -184,7 +184,7 @@ typedef struct flshm_connection {
 	/**
 	 * Connection name.
 	 */
-	const char * name;
+	char name[FLSHM_AMF0_STRING_MAX_LENGTH];
 
 	/**
 	 * Version (FP7+).
@@ -203,14 +203,14 @@ typedef struct flshm_connection {
  */
 typedef struct flshm_connected {
 	/**
-	 * The array of connection.
-	 */
-	flshm_connection connections[FLSHM_CONNECTIONS_MAX_COUNT];
-
-	/**
 	 * The number of connections listed in the array.
 	 */
 	uint32_t count;
+
+	/**
+	 * The array of connection.
+	 */
+	flshm_connection connections[FLSHM_CONNECTIONS_MAX_COUNT];
 } flshm_connected;
 
 
@@ -319,8 +319,6 @@ uint32_t flshm_amf0_write_boolean(bool flag, char * p, uint32_t max);
 
 uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max);
 
-char * flshm_write_connection(char * addr, flshm_connection connection);
-
 uint32_t flshm_hash_uid(uint32_t uid);
 
 bool flshm_shm_inited(void * shmdata);
@@ -380,22 +378,19 @@ bool flshm_connection_name_valid(const char * name);
 
 /**
  * List all registered connecitons.
- * Listed connection names point directly to the string in the shared memory.
- * These strings can change anytime by another instance once unlocked.
  */
-flshm_connected flshm_connection_list(flshm_info * info);
-
+void flshm_connection_list(flshm_connected * list, flshm_info * info);
 
 /**
  * Add a connection to the list of registered connections.
  */
-bool flshm_connection_add(flshm_info * info, flshm_connection connection);
+bool flshm_connection_add(flshm_connection * connection, flshm_info * info);
 
 
 /**
  * Remove a connection from the list of registerd connections.
  */
-bool flshm_connection_remove(flshm_info * info, flshm_connection connection);
+bool flshm_connection_remove(flshm_connection * connection, flshm_info * info);
 
 
 /**
