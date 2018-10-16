@@ -7,8 +7,7 @@
 
 #include <flshm.h>
 
-#include <hexdump.h>
-#include <msgdump.h>
+#include <dump.h>
 #include <sleep.h>
 #include <strinv.h>
 
@@ -159,7 +158,7 @@ int main(int argc, char ** argv) {
 
 				// Show debug info for the message.
 				if (debug) {
-					msgdump(message);
+					dump_msg(message);
 				}
 
 				// Read the data as AMF0 string if possible.
@@ -211,7 +210,7 @@ int main(int argc, char ** argv) {
 
 						// Show debug info for the response.
 						if (debug) {
-							msgdump(response);
+							dump_msg(response);
 						}
 
 						// Print the response string.

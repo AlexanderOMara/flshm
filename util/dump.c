@@ -3,7 +3,7 @@
 
 #include <flshm.h>
 
-#include <hexdump.h>
+#include <dump.h>
 
 int main(int argc, char ** argv) {
 	// Optionally skip null rows in the hex dump.
@@ -23,7 +23,7 @@ int main(int argc, char ** argv) {
 	flshm_lock(info);
 
 	// Dump memory.
-	hexdump(info->shmaddr, FLSHM_SIZE, 16, skipNull);
+	dump_hex(info->shmaddr, FLSHM_SIZE, 16, skipNull);
 
 	// Unlock memory.
 	flshm_unlock(info);

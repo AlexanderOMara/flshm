@@ -1,8 +1,7 @@
 SET(
 	shared
+	dump.c
 	hex2bin.c
-	hexdump.c
-	msgdump.c
 	sleep.c
 	strinv.c
 )

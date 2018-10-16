@@ -3,8 +3,7 @@
 
 #include <flshm.h>
 
-#include <hexdump.h>
-#include <msgdump.h>
+#include <dump.h>
 
 int main() {
 	flshm_keys * keys = flshm_keys_create(false);
@@ -25,7 +24,7 @@ int main() {
 
 	// Read message.
 	if (flshm_message_read(info, message)) {
-		msgdump(message);
+		dump_msg(message);
 	}
 	else {
 		printf("FAILED: flshm_message_read\n");

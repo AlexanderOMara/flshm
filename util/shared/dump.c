@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void hexdump(void * addr, unsigned int size, unsigned int col, int skipnull) {
+#include "dump.h"
+
+void dump_hex(void * addr, unsigned int size, unsigned int col, int skipnull) {
 	unsigned char * ascii = malloc(col + 1);
 	unsigned char * hex = malloc(col * 3);
 	unsigned char * offset[5] = {0};
@@ -54,4 +56,23 @@ void hexdump(void * addr, unsigned int size, unsigned int col, int skipnull) {
 	// Free memory.
 	free(ascii);
 	free(hex);
+}
+
+void dump_msg(flshm_message * message) {
+	printf("Message:\n");
+	printf("    tick: %u\n", message->tick);
+	printf("    amfl: %u\n", message->amfl);
+	printf("    name: %s\n", message->name);
+	printf("    host: %s\n", message->host);
+	printf("    version: %i\n", message->version);
+	printf("    sandboxed: %i\n", message->sandboxed);
+	printf("    https: %i\n", message->https);
+	printf("    sandbox: %u\n", message->sandbox);
+	printf("    swfv: %u\n", message->swfv);
+	printf("    filepath: %s\n", message->filepath);
+	printf("    amfv: %i\n", message->amfv);
+	printf("    method: %s\n", message->method);
+	printf("    size: %u\n", message->size);
+	printf("    data:\n");
+	dump_hex(message->data, message->size, 16, 0);
 }
