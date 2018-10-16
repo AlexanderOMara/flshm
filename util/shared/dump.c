@@ -3,22 +3,24 @@
 
 #include "dump.h"
 
-void dump_hex(void * addr, unsigned int size, unsigned int col, int skipnull) {
-	unsigned char * ascii = malloc(col + 1);
-	unsigned char * hex = malloc(col * 3);
-	unsigned char * offset[5] = {0};
+void dump_hex(void * addr, unsigned int size, bool skip_null) {
+	char ascii[16 + 1] = {0};
+	char hex[(sizeof(ascii) - 1) * 3] = {0};
+	int col = sizeof(ascii) - 1;
+	char offset[5] = {0};
+
 	unsigned char * bytes = (unsigned char *)addr;
 	char * format = "%s  %s  %s\n";
 	unsigned int i = 0;
-	int nonnull = 0;
-	int skippingnull = 0;
+	bool nonnull = 0;
+	bool skippingnull = 0;
 
 	for (; i < size; ++i) {
 		unsigned int ci = i % col;
 		unsigned int hci = ci ? (ci * 3 - 1) : 0;
 		if (!ci) {
 			if (i) {
-				if (skipnull && !nonnull) {
+				if (skip_null && !nonnull) {
 					if (!skippingnull) {
 						printf("....\n");
 					}
@@ -30,7 +32,7 @@ void dump_hex(void * addr, unsigned int size, unsigned int col, int skipnull) {
 				}
 				nonnull = 0;
 			}
-			sprintf((char *)offset, "%04X", i);
+			sprintf(offset, "%04X", i);
 		}
 
 		// Add hex to the hex column.
@@ -52,10 +54,6 @@ void dump_hex(void * addr, unsigned int size, unsigned int col, int skipnull) {
 
 	// Output the last line.
 	printf(format, offset, hex, ascii);
-
-	// Free memory.
-	free(ascii);
-	free(hex);
 }
 
 void dump_msg(flshm_message * message) {
@@ -74,5 +72,5 @@ void dump_msg(flshm_message * message) {
 	printf("    method: %s\n", message->method);
 	printf("    size: %u\n", message->size);
 	printf("    data:\n");
-	dump_hex(message->data, message->size, 16, 0);
+	dump_hex(message->data, message->size, false);
 }

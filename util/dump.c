@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,7 +8,7 @@
 
 int main(int argc, char ** argv) {
 	// Optionally skip null rows in the hex dump.
-	int skipNull = argc > 1 ? (argv[1][0] == '1') : 0;
+	bool skip_null = argc > 1 ? (argv[1][0] == '1') : false;
 
 	// Open the shared memory.
 	flshm_keys * keys = flshm_keys_create(false);
@@ -23,7 +24,7 @@ int main(int argc, char ** argv) {
 	flshm_lock(info);
 
 	// Dump memory.
-	dump_hex(info->shmaddr, FLSHM_SIZE, 16, skipNull);
+	dump_hex(info->shmaddr, FLSHM_SIZE, skip_null);
 
 	// Unlock memory.
 	flshm_unlock(info);
