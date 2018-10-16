@@ -10,10 +10,11 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 
-	flshm_keys * keys = flshm_keys_create(false);
-	flshm_info info;
+	flshm_keys keys;
+	flshm_keys_init(&keys, false);
 
-	if (!flshm_open(&info, keys)) {
+	flshm_info info;
+	if (!flshm_open(&info, &keys)) {
 		printf("FAILED: flshm_open\n");
 		return EXIT_FAILURE;
 	}
@@ -31,9 +32,6 @@ int main(int argc, char ** argv) {
 
 	// Close info.
 	flshm_close(&info);
-
-	// Cleanup memory.
-	flshm_keys_destroy(keys);
 
 	return ret;
 }

@@ -11,11 +11,11 @@
 #include <sleep.h>
 #include <strinv.h>
 
-static flshm_keys * keys = NULL;
+static flshm_keys keys;
 static flshm_info info;
-static flshm_connection connection;
 static bool opened = false;
 static bool locked = false;
+static flshm_connection connection;
 static flshm_message message;
 static flshm_message response;
 static char filepath_append[] = ".chatbot.swf";
@@ -46,10 +46,6 @@ static void cleanup(void) {
 		flshm_unlock(&info);
 		flshm_close(&info);
 		opened = false;
-	}
-	if (keys) {
-		flshm_keys_destroy(keys);
-		keys = NULL;
 	}
 }
 
@@ -110,8 +106,8 @@ int main(int argc, char ** argv) {
 
 	register_shutdown();
 
-	keys = flshm_keys_create(is_per_user);
-	opened = flshm_open(&info, keys);
+	flshm_keys_init(&keys, is_per_user);
+	opened = flshm_open(&info, &keys);
 	if (!opened) {
 		printf("FAILED: flshm_open\n");
 		cleanup();
