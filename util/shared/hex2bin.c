@@ -3,7 +3,7 @@
 
 #include "hex2bin.h"
 
-char * hex2bin(char * hex, size_t * len) {
+char * hex2bin(const char * hex, size_t * len) {
 	size_t len_hex = strlen(hex);
 	if (len_hex % 2) {
 		len_hex--;

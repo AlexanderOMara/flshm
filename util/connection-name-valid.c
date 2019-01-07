@@ -3,7 +3,7 @@
 
 #include <flshm.h>
 
-int main(int argc, char ** argv) {
+int main(int argc, const char ** argv) {
 	if (argc < 2) {
 		printf("%s name\n", argv[0]);
 		return EXIT_FAILURE;

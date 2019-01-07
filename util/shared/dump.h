@@ -5,10 +5,10 @@
 
 #include <flshm.h>
 
-void dump_hex(void * addr, unsigned int size, bool skip_null);
+void dump_hex(const void * addr, unsigned int size, bool skip_null);
 
-void dump_msg(flshm_message * message);
+void dump_msg(const flshm_message * message);
 
-void dump_str(void * addr, int size);
+void dump_str(const void * addr, int size);
 
 #endif

@@ -4,7 +4,7 @@
 
 #include <flshm.h>
 
-int main(int argc, char ** argv) {
+int main(int argc, const char ** argv) {
 	bool locking = argc < 2 ? false : argv[1][0] == '1';
 
 	flshm_keys keys;

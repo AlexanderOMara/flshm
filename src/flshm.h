@@ -259,11 +259,6 @@ typedef struct flshm_message {
 	uint32_t tick;
 
 	/**
-	 * The length of all of the AMF data.
-	 */
-	uint32_t amfl;
-
-	/**
 	 * The sending connection name.
 	 */
 	flshm_amf0_string name;
@@ -345,19 +340,19 @@ typedef struct flshm_message {
 /**
  * Read an AMF0 string.
  */
-uint32_t flshm_amf0_read_string(flshm_amf0_string * str, char * p, uint32_t max);
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, uint32_t max);
 
 
 /**
  * Read an AMF0 boolean.
  */
-uint32_t flshm_amf0_read_boolean(bool * flag, char * p, uint32_t max);
+uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, uint32_t max);
 
 
 /**
  * Read an AMF0 double.
  */
-uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max);
+uint32_t flshm_amf0_read_double(double * number, const char * p, uint32_t max);
 
 
 /**
@@ -404,7 +399,7 @@ uint32_t flshm_hash_uid(uint32_t uid);
 /**
  * Check if shared memory data inited.
  */
-bool flshm_shm_inited(void * shmdata);
+bool flshm_shm_inited(const void * shmdata);
 
 
 /**
@@ -425,7 +420,7 @@ void flshm_keys_init(flshm_keys * keys, bool is_per_user);
 /**
  * Open the semaphores and shared memory.
  */
-bool flshm_open(flshm_info * info, flshm_keys * keys);
+bool flshm_open(flshm_info * info, const flshm_keys * keys);
 
 
 /**
@@ -476,44 +471,44 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list);
 /**
  * Add a connection to the list of registered connections.
  */
-bool flshm_connection_add(flshm_info * info, flshm_connection * connection);
+bool flshm_connection_add(flshm_info * info, const flshm_connection * connection);
 
 
 /**
  * Remove a connection from the list of registerd connections.
  */
-bool flshm_connection_remove(flshm_info * info, flshm_connection * connection);
+bool flshm_connection_remove(flshm_info * info, const flshm_connection * connection);
 
 
 /**
  * Calculate encoded size of a connection.
  */
-uint32_t flshm_connection_encode_size(flshm_connection * connection);
+uint32_t flshm_connection_encode_size(const flshm_connection * connection);
 
 
 /**
  * Write connection to address.
  */
-uint32_t flshm_connection_write(flshm_connection * connection, char * p, uint32_t max);
+uint32_t flshm_connection_write(const flshm_connection * connection, char * p, uint32_t max);
 
 
 /**
  * Read the current message tick.
  * Returns 0 if tick is not set.
  */
-uint32_t flshm_message_tick(flshm_info * info);
+uint32_t flshm_message_tick(const flshm_info * info);
 
 
 /**
  * Read a message from shared memory.
  */
-bool flshm_message_read(flshm_info * info, flshm_message * message);
+bool flshm_message_read(const flshm_info * info, flshm_message * message);
 
 
 /**
  * Write a message to shared memory.
  */
-bool flshm_message_write(flshm_info * info, flshm_message * message);
+bool flshm_message_write(flshm_info * info, const flshm_message * message);
 
 
 /**

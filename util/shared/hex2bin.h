@@ -3,6 +3,6 @@
 
 #include <stdlib.h>
 
-char * hex2bin(char * hex, size_t * len);
+char * hex2bin(const char * hex, size_t * len);
 
 #endif

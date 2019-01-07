@@ -90,7 +90,7 @@ static void register_shutdown() {
 	}
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, const char ** argv) {
 	if (argc < 3) {
 		printf(
 			"%s "
@@ -112,8 +112,8 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 
-	char * connection_name_self = argv[1];
-	char * connection_name_peer = argv[2];
+	const char * connection_name_self = argv[1];
+	const char * connection_name_peer = argv[2];
 	bool debug = argc < 4 ? false : argv[3][0] == '1';
 	bool is_per_user = argc < 5 ? false : argv[4][0] == '1';
 

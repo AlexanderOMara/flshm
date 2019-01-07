@@ -24,7 +24,7 @@
 #include "flshm.h"
 
 
-uint32_t flshm_amf0_read_string(flshm_amf0_string * str, char * p, uint32_t max) {
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, uint32_t max) {
 	// Bounds check the header.
 	if (max < 3) {
 		return false;
@@ -61,7 +61,7 @@ uint32_t flshm_amf0_read_string(flshm_amf0_string * str, char * p, uint32_t max)
 }
 
 
-uint32_t flshm_amf0_read_boolean(bool * flag, char * p, uint32_t max) {
+uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, uint32_t max) {
 	// Bounds check.
 	if (max < 2) {
 		return 0;
@@ -80,7 +80,7 @@ uint32_t flshm_amf0_read_boolean(bool * flag, char * p, uint32_t max) {
 }
 
 
-uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max) {
+uint32_t flshm_amf0_read_double(double * number, const char * p, uint32_t max) {
 	// Bounds check.
 	if (max < 9) {
 		return 0;
@@ -228,7 +228,7 @@ uint32_t flshm_hash_uid(uint32_t uid) {
 }
 
 
-bool flshm_shm_inited(void * shmdata) {
+bool flshm_shm_inited(const void * shmdata) {
 	// Check for 2 uint32 flag in the head.
 	return (
 		*((uint32_t *)shmdata) == 1 &&
@@ -319,7 +319,7 @@ void flshm_keys_init(flshm_keys * keys, bool is_per_user) {
 }
 
 
-bool flshm_open(flshm_info * info, flshm_keys * keys) {
+bool flshm_open(flshm_info * info, const flshm_keys * keys) {
 	bool r;
 
 	#ifdef _WIN32
@@ -611,7 +611,7 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 }
 
 
-bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
+bool flshm_connection_add(flshm_info * info, const flshm_connection * connection) {
 	// Validate the connection name.
 	if (!flshm_connection_name_valid_cstr(connection->name)) {
 		return false;
@@ -671,7 +671,7 @@ bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 }
 
 
-bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
+bool flshm_connection_remove(flshm_info * info, const flshm_connection * connection) {
 	// Get the current connections.
 	flshm_connected connected;
 	flshm_connection_list(info, &connected);
@@ -712,7 +712,7 @@ bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
 }
 
 
-uint32_t flshm_connection_encode_size(flshm_connection * connection) {
+uint32_t flshm_connection_encode_size(const flshm_connection * connection) {
 	// Get connection name size.
 	uint32_t name_size = (uint32_t)strlen(connection->name);
 
@@ -725,7 +725,7 @@ uint32_t flshm_connection_encode_size(flshm_connection * connection) {
 }
 
 
-uint32_t flshm_connection_write(flshm_connection * connection, char * p, uint32_t max) {
+uint32_t flshm_connection_write(const flshm_connection * connection, char * p, uint32_t max) {
 	if (
 		max < FLSHM_CONNECTION_ENCODE_MAX_SIZE &&
 		max < flshm_connection_encode_size(connection)
@@ -758,16 +758,15 @@ uint32_t flshm_connection_write(flshm_connection * connection, char * p, uint32_
 }
 
 
-uint32_t flshm_message_tick(flshm_info * info) {
+uint32_t flshm_message_tick(const flshm_info * info) {
 	// Read the tick from the memory.
 	return *((uint32_t *)((char *)info->data + FLSHM_MESSAGE_TICK_OFFSET));
 }
 
 
-bool flshm_message_read(flshm_info * info, flshm_message * message) {
+bool flshm_message_read(const flshm_info * info, flshm_message * message) {
 	// All the properties to be set.
 	uint32_t tick;
-	uint32_t amfl;
 	flshm_version version = FLSHM_VERSION_1;
 	bool sandboxed = false;
 	bool https = false;
@@ -788,19 +787,18 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 	}
 
 	// Read the message size if present and sanity check it.
-	amfl = *((uint32_t *)(shmdata + FLSHM_MESSAGE_SIZE_OFFSET));
-	if (!amfl || amfl > FLSHM_MESSAGE_MAX_SIZE) {
+	uint32_t amf_size = *((uint32_t *)(shmdata + FLSHM_MESSAGE_SIZE_OFFSET));
+	if (!amf_size || amf_size > FLSHM_MESSAGE_MAX_SIZE) {
 		return false;
 	}
 
 	// Keep track of position and bounds.
 	uint32_t i = FLSHM_MESSAGE_BODY_OFFSET;
-	uint32_t max = FLSHM_MESSAGE_BODY_OFFSET + amfl;
+	uint32_t max = FLSHM_MESSAGE_BODY_OFFSET + amf_size;
 	uint32_t re;
 
-	bool success = false;
-
 	// Start a block that can be broken from, assume failure on an early break.
+	bool success = false;
 	for (;;) {
 		// Read the connection name, or fail.
 		re = flshm_amf0_read_string(
@@ -927,7 +925,6 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 
 		// Finish setting the members.
 		message->tick = tick;
-		message->amfl = amfl;
 		message->version = version;
 		message->sandboxed = sandboxed;
 		message->https = https;
@@ -944,7 +941,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 }
 
 
-bool flshm_message_write(flshm_info * info, flshm_message * message) {
+bool flshm_message_write(flshm_info * info, const flshm_message * message) {
 	// The buffer to encode message into.
 	char buffer[FLSHM_MESSAGE_MAX_SIZE];
 
@@ -1077,9 +1074,6 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		// Write message data to the buffer.
 		memcpy(buffer + i, message->data, message->size);
 		i += message->size;
-
-		// Set the total AMF size on the struct.
-		message->amfl = i;
 
 		// Pointer to shared memory.
 		char * shmdata = (char *)info->data;

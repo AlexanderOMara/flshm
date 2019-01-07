@@ -6,7 +6,7 @@
 
 #include <dump.h>
 
-int main(int argc, char ** argv) {
+int main(int argc, const char ** argv) {
 	// Optionally skip null rows in the hex dump.
 	bool skip_null = argc > 1 ? (argv[1][0] == '1') : false;
 

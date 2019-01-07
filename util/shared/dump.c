@@ -3,7 +3,7 @@
 
 #include "dump.h"
 
-void dump_hex(void * addr, unsigned int size, bool skip_null) {
+void dump_hex(const void * addr, unsigned int size, bool skip_null) {
 	char ascii[16 + 1] = {0};
 	char hex[(sizeof(ascii) - 1) * 3] = {0};
 	int col = sizeof(ascii) - 1;
@@ -56,11 +56,10 @@ void dump_hex(void * addr, unsigned int size, bool skip_null) {
 	printf(format, offset, hex, ascii);
 }
 
-void dump_msg(flshm_message * message) {
+void dump_msg(const flshm_message * message) {
 	char amf0_cstr[FLSHM_AMF0_STRING_DECODE_MAX_SIZE];
 	printf("Message:\n");
 	printf("    tick: %u\n", message->tick);
-	printf("    amfl: %u\n", message->amfl);
 	flshm_amf0_decode_string_cstr(&message->name, amf0_cstr, false);
 	printf("    name: %s\n", amf0_cstr);
 	flshm_amf0_decode_string_cstr(&message->host, amf0_cstr, false);
@@ -80,7 +79,7 @@ void dump_msg(flshm_message * message) {
 	dump_hex(message->data, message->size, false);
 }
 
-void dump_str(void * addr, int size) {
+void dump_str(const void * addr, int size) {
 	unsigned char * p = (unsigned char *)addr;
 	bool sized = size >= 0;
 	for (int i = 0;; i++) {

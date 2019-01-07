@@ -5,7 +5,7 @@
 
 #include <hex2bin.h>
 
-int main(int argc, char ** argv) {
+int main(int argc, const char ** argv) {
 	if (argc < 13) {
 		printf("%s "
 			"tick "
@@ -27,16 +27,16 @@ int main(int argc, char ** argv) {
 	}
 
 	uint32_t tick = 0;
-	char * name = NULL;
-	char * host = NULL;
+	const char * name = NULL;
+	const char * host = NULL;
 	flshm_version version = FLSHM_VERSION_1;
 	bool sandboxed = false;
 	bool https = false;
 	uint32_t sandbox = 0;
 	uint32_t swfv = 0;
-	char * filepath = NULL;
+	const char * filepath = NULL;
 	flshm_amf amfv = FLSHM_AMF0;
-	char * method = NULL;
+	const char * method = NULL;
 	size_t size = 0;
 	void * data = NULL;
 
