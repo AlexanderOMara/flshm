@@ -24,7 +24,7 @@
 #include "flshm.h"
 
 
-uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, uint32_t max) {
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, size_t max) {
 	// Bounds check the header.
 	if (max < 3) {
 		return false;
@@ -61,7 +61,7 @@ uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, uint32_
 }
 
 
-uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, uint32_t max) {
+uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, size_t max) {
 	// Bounds check.
 	if (max < 2) {
 		return 0;
@@ -80,7 +80,7 @@ uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, uint32_t max) {
 }
 
 
-uint32_t flshm_amf0_read_double(double * number, const char * p, uint32_t max) {
+uint32_t flshm_amf0_read_double(double * number, const char * p, size_t max) {
 	// Bounds check.
 	if (max < 9) {
 		return 0;
@@ -114,7 +114,7 @@ uint32_t flshm_amf0_read_double(double * number, const char * p, uint32_t max) {
 }
 
 
-uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, uint32_t max) {
+uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, size_t max) {
 	// Get encode length and bounds check.
 	uint16_t size = str->size;
 	uint32_t encode_size = size + 3;
@@ -138,7 +138,7 @@ uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, uint32
 }
 
 
-uint32_t flshm_amf0_write_boolean(bool flag, char * p, uint32_t max) {
+uint32_t flshm_amf0_write_boolean(bool flag, char * p, size_t max) {
 	// Bounds check.
 	if (max < 2) {
 		return 0;
@@ -155,7 +155,7 @@ uint32_t flshm_amf0_write_boolean(bool flag, char * p, uint32_t max) {
 }
 
 
-uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
+uint32_t flshm_amf0_write_double(double number, char * p, size_t max) {
 	// Bounds check.
 	if (max < 9) {
 		return 0;
@@ -725,7 +725,7 @@ uint32_t flshm_connection_encode_size(const flshm_connection * connection) {
 }
 
 
-uint32_t flshm_connection_write(const flshm_connection * connection, char * p, uint32_t max) {
+uint32_t flshm_connection_write(const flshm_connection * connection, char * p, size_t max) {
 	if (
 		max < FLSHM_CONNECTION_ENCODE_MAX_SIZE &&
 		max < flshm_connection_encode_size(connection)
