@@ -53,7 +53,7 @@ uint32_t flshm_amf0_read_string(flshm_amf0_string * str, char * p, uint32_t max)
 	// Set the string size.
 	str->size = size;
 
-	// Copy string the string data, not null terminated.
+	// Copy string data, not null terminated.
 	memcpy(str->data, p, size);
 
 	// Return the amount of data read.
@@ -126,7 +126,7 @@ uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, uint32
 	*p = '\x02';
 	p++;
 
-	// Write the string size, big engian.
+	// Write the string size, big endian.
 	*((uint8_t *)p    ) = (size >> 8) & 0xFF;
 	*((uint8_t *)p + 1) = (size     ) & 0xFF;
 	p += 2;
@@ -602,7 +602,6 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 				con->sandbox = sandbox;
 				list->count++;
 
-				// connected.connections[connected.count++] = connection;
 				name = NULL;
 				version = FLSHM_VERSION_1;
 				sandbox = FLSHM_SECURITY_NONE;
@@ -710,7 +709,6 @@ bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
 	char * addr = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
 
 	// Loop over them all, rewrite everything to ensure clean reflow.
-	// No overwrite risk, copies will always be written at or before self.
 	bool found = false;
 	for (uint32_t i = 0; i < connected.count; i++) {
 		flshm_connection c = connected.connections[i];
@@ -726,7 +724,7 @@ bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
 			continue;
 		}
 
-		// Rewrite this connection wherever earlier it may fall.
+		// Rewrite this connection entry.
 		addr = flshm_write_connection(addr, &c);
 	}
 
@@ -779,7 +777,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 
 	bool success = false;
 
-	// Start a block that can be broken from, assume failure on break.
+	// Start a block that can be broken from, assume failure on an early break.
 	for (;;) {
 		// Read the connection name, or fail.
 		re = flshm_amf0_read_string(
@@ -914,8 +912,8 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 		message->swfv = swfv;
 		message->amfv = amfv;
 		message->size = size;
-		success = true;
 
+		success = true;
 		break;
 	}
 
@@ -924,35 +922,6 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 
 
 bool flshm_message_write(flshm_info * info, flshm_message * message) {
-	// Validate tick is non-0.
-	if (!message->tick) {
-		return false;
-	}
-
-	// Validate connection is set and valid.
-	if (!flshm_connection_name_valid_amf0(&message->name)) {
-		return false;
-	}
-
-	// Validate host is set.
-	if (!message->host.size) {
-		return false;
-	}
-
-	// If local-with-file sandbox, ensure filepath is set.
-	if (
-		message->version >= FLSHM_VERSION_3 &&
-		message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE &&
-		!message->filepath.size
-	) {
-		return false;
-	}
-
-	// Validate method is set.
-	if (!message->method.size) {
-		return false;
-	}
-
 	// The buffer to encode message into.
 	char buffer[FLSHM_MESSAGE_MAX_SIZE];
 
@@ -1101,9 +1070,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 		// Set the message tick.
 		*((uint32_t *)(shmdata + FLSHM_MESSAGE_TICK_OFFSET)) = message->tick;
 
-		// If finished the block, then successful.
 		success = true;
-
 		break;
 	}
 

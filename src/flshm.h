@@ -228,7 +228,7 @@ typedef struct flshm_connection {
 
 
 /**
- * The list of connections as a fixed-size array, with the registered count.
+ * The list of connections.
  */
 typedef struct flshm_connected {
 	/**
