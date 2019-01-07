@@ -20,13 +20,13 @@ int main() {
 	flshm_connection_list(&info, &connected);
 	printf("Connections: %i\n", connected.count);
 	for (uint32_t i = 0; i < connected.count; i++) {
-		flshm_connection c = connected.connections[i];
+		flshm_connection * c = &connected.connections[i];
 		printf(
 			"    %i:  name:%s  version:%i  sandbox:%i\n",
 			i,
-			c.name,
-			c.version,
-			c.sandbox
+			c->name,
+			c->version,
+			c->sandbox
 		);
 	}
 

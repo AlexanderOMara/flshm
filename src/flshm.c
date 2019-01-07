@@ -24,23 +24,23 @@
 #include "flshm.h"
 
 
-uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, size_t max) {
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * src, size_t max) {
 	// Bounds check the header.
 	if (max < 3) {
 		return false;
 	}
 
 	// Check the type marker.
-	if (*p != '\x02') {
+	if (*src != '\x02') {
 		return false;
 	}
-	p++;
+	src++;
 
 	// Read the string size, big endian.
 	uint16_t size =
-		((*((uint8_t *)p + 1)     ) & 0xFF  ) |
-		((*((uint8_t *)p    ) << 8) & 0xFF00);
-	p += 2;
+		((*((uint8_t *)src + 1)     ) & 0xFF  ) |
+		((*((uint8_t *)src    ) << 8) & 0xFF00);
+	src += 2;
 
 	// Compute total data size.
 	uint32_t encode_size = size + 3;
@@ -54,43 +54,43 @@ uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, size_t 
 	str->size = size;
 
 	// Copy string data, not null terminated.
-	memcpy(str->data, p, size);
+	memcpy(str->data, src, size);
 
 	// Return the amount of data read.
 	return encode_size;
 }
 
 
-uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, size_t max) {
+uint32_t flshm_amf0_read_boolean(bool * flag, const char * src, size_t max) {
 	// Bounds check.
 	if (max < 2) {
 		return 0;
 	}
 
 	// Check the type marker.
-	if (*p != '\x01') {
+	if (*src != '\x01') {
 		return 0;
 	}
-	p++;
+	src++;
 
 	// Read flag, anything but null is considered true.
-	*flag = *p != '\x00';
+	*flag = *src != '\x00';
 
 	return 2;
 }
 
 
-uint32_t flshm_amf0_read_double(double * number, const char * p, size_t max) {
+uint32_t flshm_amf0_read_double(double * number, const char * src, size_t max) {
 	// Bounds check.
 	if (max < 9) {
 		return 0;
 	}
 
 	// Check the type marker.
-	if (*p != '\x00') {
+	if (*src != '\x00') {
 		return 0;
 	}
-	p++;
+	src++;
 
 	// Read big endian double into native via union.
 	union {
@@ -98,14 +98,14 @@ uint32_t flshm_amf0_read_double(double * number, const char * p, size_t max) {
 		uint64_t i;
 	} u;
 	u.i = 0;
-	u.i |= (((uint64_t)p[0]) & 0xFF) << 56;
-	u.i |= (((uint64_t)p[1]) & 0xFF) << 48;
-	u.i |= (((uint64_t)p[2]) & 0xFF) << 40;
-	u.i |= (((uint64_t)p[3]) & 0xFF) << 32;
-	u.i |= (((uint64_t)p[4]) & 0xFF) << 24;
-	u.i |= (((uint64_t)p[5]) & 0xFF) << 16;
-	u.i |= (((uint64_t)p[6]) & 0xFF) << 8;
-	u.i |= (((uint64_t)p[7]) & 0xFF);
+	u.i |= (((uint64_t)src[0]) & 0xFF) << 56;
+	u.i |= (((uint64_t)src[1]) & 0xFF) << 48;
+	u.i |= (((uint64_t)src[2]) & 0xFF) << 40;
+	u.i |= (((uint64_t)src[3]) & 0xFF) << 32;
+	u.i |= (((uint64_t)src[4]) & 0xFF) << 24;
+	u.i |= (((uint64_t)src[5]) & 0xFF) << 16;
+	u.i |= (((uint64_t)src[6]) & 0xFF) << 8;
+	u.i |= (((uint64_t)src[7]) & 0xFF);
 
 	// Set the double variable.
 	*number = u.d;
@@ -114,7 +114,7 @@ uint32_t flshm_amf0_read_double(double * number, const char * p, size_t max) {
 }
 
 
-uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, size_t max) {
+uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * dest, size_t max) {
 	// Get encode length and bounds check.
 	uint16_t size = str->size;
 	uint32_t encode_size = size + 3;
@@ -123,47 +123,47 @@ uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, size_t
 	}
 
 	// Write the string marker.
-	*p = '\x02';
-	p++;
+	*dest = '\x02';
+	dest++;
 
 	// Write the string size, big endian.
-	*((uint8_t *)p    ) = (size >> 8) & 0xFF;
-	*((uint8_t *)p + 1) = (size     ) & 0xFF;
-	p += 2;
+	*((uint8_t *)dest    ) = (size >> 8) & 0xFF;
+	*((uint8_t *)dest + 1) = (size     ) & 0xFF;
+	dest += 2;
 
 	// Copy the string without null byte.
-	memcpy(p, str->data, size);
+	memcpy(dest, str->data, size);
 
 	return encode_size;
 }
 
 
-uint32_t flshm_amf0_write_boolean(bool flag, char * p, size_t max) {
+uint32_t flshm_amf0_write_boolean(bool flag, char * dest, size_t max) {
 	// Bounds check.
 	if (max < 2) {
 		return 0;
 	}
 
 	// Write the type marker.
-	*p = '\x01';
-	p++;
+	*dest = '\x01';
+	dest++;
 
 	// Write flag.
-	*p = flag ? '\x01' : '\x00';
+	*dest = flag ? '\x01' : '\x00';
 
 	return 2;
 }
 
 
-uint32_t flshm_amf0_write_double(double number, char * p, size_t max) {
+uint32_t flshm_amf0_write_double(double number, char * dest, size_t max) {
 	// Bounds check.
 	if (max < 9) {
 		return 0;
 	}
 
 	// Write the type marker.
-	*p = '\x00';
-	p++;
+	*dest = '\x00';
+	dest++;
 
 	// Write big endian double from native via union.
 	union {
@@ -171,14 +171,14 @@ uint32_t flshm_amf0_write_double(double number, char * p, size_t max) {
 		uint64_t i;
 	} u;
 	u.d = number;
-	p[0] = (char)(u.i >> 56);
-	p[1] = (char)(u.i >> 48);
-	p[2] = (char)(u.i >> 40);
-	p[3] = (char)(u.i >> 32);
-	p[4] = (char)(u.i >> 24);
-	p[5] = (char)(u.i >> 16);
-	p[6] = (char)(u.i >> 8);
-	p[7] = (char)(u.i);
+	dest[0] = (char)(u.i >> 56);
+	dest[1] = (char)(u.i >> 48);
+	dest[2] = (char)(u.i >> 40);
+	dest[3] = (char)(u.i >> 32);
+	dest[4] = (char)(u.i >> 24);
+	dest[5] = (char)(u.i >> 16);
+	dest[6] = (char)(u.i >> 8);
+	dest[7] = (char)(u.i);
 
 	return 9;
 }
@@ -520,93 +520,31 @@ bool flshm_connection_name_valid_amf0(const flshm_amf0_string * name) {
 
 
 void flshm_connection_list(flshm_info * info, flshm_connected * list) {
+	// Reset count.
 	list->count = 0;
 
-	char * name = NULL;
-	flshm_version version = FLSHM_VERSION_1;
-	flshm_security sandbox = FLSHM_SECURITY_NONE;
-
-	// Map out the memory, and loop over them.
+	// Map out the memory, and loop over connections.
 	char * memory = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
-	for (uint32_t i = 0; i < FLSHM_CONNECTIONS_SIZE; i++) {
-		// Get pointer to memory and the character that appears there.
-		char * p = memory + i;
-		char pc = *p;
-
-		// Unexpected null byte terminates the list.
-		if (pc == '\x00') {
+	for (uint32_t offset = 0; list->count < FLSHM_CONNECTIONS_MAX_COUNT;) {
+		// Read a connection entry, end of list if nothing read.
+		bool valid = false;
+		uint32_t read = flshm_connection_read(
+			&list->connections[list->count],
+			memory + offset,
+			FLSHM_CONNECTIONS_SIZE - offset,
+			&valid
+		);
+		if (!read) {
 			break;
 		}
-		else if (pc == ':') {
-			// Check if matches "::[^\x00]\x00" in the remaining space.
-			if (
-				i < FLSHM_CONNECTIONS_SIZE - 3 &&
-				*(p + 1) == ':' &&
-				*(p + 2) != '\x00' &&
-				*(p + 3) == '\x00'
-			) {
-				// Check that we are still parsing a connection.
-				if (name) {
-					unsigned char c = *(p + 2);
 
-					// Set version then sandbox, '0' then '1' indexed.
-					if (version == FLSHM_VERSION_1) {
-						version = c - (uint8_t)'0';
-					}
-					else if (sandbox == FLSHM_SECURITY_NONE) {
-						sandbox = c - (uint8_t)'1';
-					}
-				}
-				i += 3;
-			}
-			else {
-				// Otherwise seek until the next null or end.
-				for (; i < FLSHM_CONNECTIONS_SIZE; i++) {
-					if (*(memory + i) == '\x00') {
-						break;
-					}
-				}
-			}
+		// If a valid connection, move to next entry, invalid skipped.
+		if (valid) {
+			list->count++;
 		}
-		else {
-			// If currently has an open connection, store it, and reset.
-			if (name) {
-				flshm_connection * con = &list->connections[list->count];
-				strcpy(con->name, name);
-				con->version = version;
-				con->sandbox = sandbox;
-				list->count++;
 
-				name = NULL;
-				version = FLSHM_VERSION_1;
-				sandbox = FLSHM_SECURITY_NONE;
-
-				// Stop if reached the maximum connections.
-				if (list->count >= FLSHM_CONNECTIONS_MAX_COUNT) {
-					break;
-				}
-			}
-
-			// Seek out the null in the remaining memory.
-			for (; i < FLSHM_CONNECTIONS_SIZE; i++) {
-				if (*(memory + i) == '\x00') {
-					// If nulled and valid, set name.
-					if (flshm_connection_name_valid_cstr(p)) {
-						name = p;
-					}
-					break;
-				}
-			}
-		}
-	}
-
-	// Store the last connection if not yet stored.
-	if (name) {
-		flshm_connection * con = &list->connections[list->count];
-		strcpy(con->name, name);
-		con->version = version;
-		con->sandbox = sandbox;
-		list->count++;
+		// Move to next connection.
+		offset += read;
 	}
 }
 
@@ -725,7 +663,71 @@ uint32_t flshm_connection_encode_size(const flshm_connection * connection) {
 }
 
 
-uint32_t flshm_connection_write(const flshm_connection * connection, char * p, size_t max) {
+uint32_t flshm_connection_read(flshm_connection * connection, const char * src, size_t max, bool * valid) {
+	*valid = false;
+
+	// Default values.
+	const char * name = NULL;
+	flshm_version version = FLSHM_VERSION_1;
+	flshm_security sandbox = FLSHM_SECURITY_NONE;
+
+	// Seek out name end.
+	bool ended = false;
+	uint32_t i = 0;
+	for (; i < max; i++) {
+		char c = src[i];
+		if (c == '\x00') {
+			ended = true;
+			break;
+		}
+	}
+
+	//  If string did not end in max or no string data, no connection here.
+	if (!ended || !i) {
+		return 0;
+	}
+	i++;
+
+	// Name found, now validate, return now if invalid.
+	name = src;
+	if (!flshm_connection_name_valid_cstr(name)) {
+		return i;
+	}
+
+	// Check if matches "::[^\x00]\x00" up to 2 times in the remaining space.
+	if (
+		i + 4 < max &&
+		src[i + 0] == ':' &&
+		src[i + 1] == ':' &&
+		src[i + 2] != '\x00' &&
+		src[i + 3] == '\x00'
+	) {
+		version = src[i + 2] - (uint8_t)'0';
+		i += 4;
+
+		if (
+			i + 4 < max &&
+			src[i + 0] == ':' &&
+			src[i + 1] == ':' &&
+			src[i + 2] != '\x00' &&
+			src[i + 3] == '\x00'
+		) {
+			sandbox = src[i + 2] - (uint8_t)'1';
+			i += 4;
+		}
+	}
+
+	// Copy the connection data.
+	strcpy(connection->name, name);
+	connection->version = version;
+	connection->sandbox = sandbox;
+
+	*valid = true;
+	return i;
+}
+
+
+uint32_t flshm_connection_write(const flshm_connection * connection, char * dest, size_t max) {
 	// If the max size is less than the max encode size, check encode size.
 	// Optimization trick to avoid computing size when unnecessary.
 	if (
@@ -738,21 +740,21 @@ uint32_t flshm_connection_write(const flshm_connection * connection, char * p, s
 	// Copy connection name and remember length.
 	uint32_t i = 0;
 	for (char c; (c = connection->name[i]) != '\x00'; i++) {
-		p[i] = c;
+		dest[i] = c;
 	}
-	p[i++] = '\x00';
+	dest[i++] = '\x00';
 
 	// Add the meta data if present, '0' and '1' indexed.
 	if (connection->version != FLSHM_VERSION_1) {
-		p[i++] = ':';
-		p[i++] = ':';
-		p[i++] = (char)((uint8_t)'0' + connection->version);
-		p[i++] = '\x00';
+		dest[i++] = ':';
+		dest[i++] = ':';
+		dest[i++] = (char)((uint8_t)'0' + connection->version);
+		dest[i++] = '\x00';
 		if (connection->sandbox != FLSHM_SECURITY_NONE) {
-			p[i++] = ':';
-			p[i++] = ':';
-			p[i++] = (char)((uint8_t)'1' + connection->sandbox);
-			p[i++] = '\x00';
+			dest[i++] = ':';
+			dest[i++] = ':';
+			dest[i++] = (char)((uint8_t)'1' + connection->sandbox);
+			dest[i++] = '\x00';
 		}
 	}
 

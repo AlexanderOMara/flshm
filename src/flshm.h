@@ -340,37 +340,37 @@ typedef struct flshm_message {
 /**
  * Read an AMF0 string.
  */
-uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * p, size_t max);
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, const char * src, size_t max);
 
 
 /**
  * Read an AMF0 boolean.
  */
-uint32_t flshm_amf0_read_boolean(bool * flag, const char * p, size_t max);
+uint32_t flshm_amf0_read_boolean(bool * flag, const char * src, size_t max);
 
 
 /**
  * Read an AMF0 double.
  */
-uint32_t flshm_amf0_read_double(double * number, const char * p, size_t max);
+uint32_t flshm_amf0_read_double(double * number, const char * src, size_t max);
 
 
 /**
  * Write an AMF0 string.
  */
-uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, size_t max);
+uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * dest, size_t max);
 
 
 /**
  * Write an AMF0 boolean.
  */
-uint32_t flshm_amf0_write_boolean(bool flag, char * p, size_t max);
+uint32_t flshm_amf0_write_boolean(bool flag, char * dest, size_t max);
 
 
 /**
  * Write an AMF0 double.
  */
-uint32_t flshm_amf0_write_double(double number, char * p, size_t max);
+uint32_t flshm_amf0_write_double(double number, char * dest, size_t max);
 
 
 /**
@@ -487,9 +487,15 @@ uint32_t flshm_connection_encode_size(const flshm_connection * connection);
 
 
 /**
+ * Read connection from address.
+ */
+uint32_t flshm_connection_read(flshm_connection * connection, const char * src, size_t max, bool * valid);
+
+
+/**
  * Write connection to address.
  */
-uint32_t flshm_connection_write(const flshm_connection * connection, char * p, size_t max);
+uint32_t flshm_connection_write(const flshm_connection * connection, char * dest, size_t max);
 
 
 /**
