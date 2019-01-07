@@ -726,6 +726,8 @@ uint32_t flshm_connection_encode_size(const flshm_connection * connection) {
 
 
 uint32_t flshm_connection_write(const flshm_connection * connection, char * p, size_t max) {
+	// If the max size is less than the max encode size, check encode size.
+	// Optimization trick to avoid computing size when unnecessary.
 	if (
 		max < FLSHM_CONNECTION_ENCODE_MAX_SIZE &&
 		max < flshm_connection_encode_size(connection)
