@@ -218,31 +218,6 @@ bool flshm_amf0_encode_string_cstr(flshm_amf0_string * str, const char * from) {
 }
 
 
-char * flshm_write_connection(char * addr, flshm_connection * connection) {
-	// Copy the name with the null byte into the list and advance past it.
-	uint32_t name_size = (uint32_t)strlen(connection->name);
-
-	strcpy(addr, connection->name);
-	addr += name_size + 1;
-
-	// Add the meta data if present, '0' and '1' indexed.
-	if (connection->version != FLSHM_VERSION_1) {
-		*(addr++) = ':';
-		*(addr++) = ':';
-		*(addr++) = (char)((uint8_t)'0' + connection->version);
-		*(addr++) = '\x00';
-		if (connection->sandbox != FLSHM_SECURITY_NONE) {
-			*(addr++) = ':';
-			*(addr++) = ':';
-			*(addr++) = (char)((uint8_t)'1' + connection->sandbox);
-			*(addr++) = '\x00';
-		}
-	}
-
-	return addr;
-}
-
-
 uint32_t flshm_hash_uid(uint32_t uid) {
 	// Hash the uid into something unique.
 	uint32_t a = 9 * ((uid + ~(uid << 15)) ^ ((uid + ~(uid << 15)) >> 10));
@@ -642,15 +617,6 @@ bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 		return false;
 	}
 
-	// Get connection name size.
-	uint32_t name_size = (uint32_t)strlen(connection->name);
-
-	// Compute size requirements for serialized connection, includes null.
-	uint32_t serialized_size = name_size + 1;
-	if (connection->version != FLSHM_VERSION_1) {
-		serialized_size += connection->sandbox != FLSHM_SECURITY_NONE ? 8 : 4;
-	}
-
 	// Get the current connections.
 	flshm_connected connected;
 	flshm_connection_list(info, &connected);
@@ -682,16 +648,21 @@ bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 		}
 	}
 
-	// Fail if the serialized data would not fit in the remaining memory.
-	if (
-		offset >= FLSHM_CONNECTIONS_SIZE ||
-		offset + serialized_size + 1 >= FLSHM_CONNECTIONS_SIZE
-	) {
+	// Return now if no space remaining.
+	if (offset >= FLSHM_CONNECTIONS_SIZE) {
 		return false;
 	}
 
-	// Write the connection to the list.
-	char * addr = flshm_write_connection(memory + offset, connection);
+	// Calculate the remaining space.
+	uint32_t max = (FLSHM_CONNECTIONS_SIZE - offset) - 1;
+
+	// Write the connection to the list, or fail.
+	char * addr = memory + offset;
+	uint32_t wrote = flshm_connection_write(connection, addr, max);
+	if (!wrote) {
+		return false;
+	}
+	addr += wrote;
 
 	// Add list terminating null.
 	*(addr + 1) = '\x00';
@@ -711,27 +682,79 @@ bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
 	// Loop over them all, rewrite everything to ensure clean reflow.
 	bool found = false;
 	for (uint32_t i = 0; i < connected.count; i++) {
-		flshm_connection c = connected.connections[i];
+		flshm_connection * con = &connected.connections[i];
 
 		// Check if this is the one to remove.
 		if (
 			!found &&
-			c.version == connection->version &&
-			c.sandbox == connection->sandbox &&
-			!strcmp(c.name, connection->name)
+			con->version == connection->version &&
+			con->sandbox == connection->sandbox &&
+			!strcmp(con->name, connection->name)
 		) {
 			found = true;
 			continue;
 		}
 
-		// Rewrite this connection entry.
-		addr = flshm_write_connection(addr, &c);
+		// Rewrite this connection entry, no need for max write limit.
+		// The rewritten list will never be larger than the old list.
+		// Pass size of maximum possible to skip computing encode size.
+		addr += flshm_connection_write(
+			con,
+			addr,
+			FLSHM_CONNECTION_ENCODE_MAX_SIZE
+		);
 	}
 
 	// Add list terminating null.
 	*(addr) = '\x00';
 
 	return found;
+}
+
+
+uint32_t flshm_connection_encode_size(flshm_connection * connection) {
+	// Get connection name size.
+	uint32_t name_size = (uint32_t)strlen(connection->name);
+
+	// Compute size requirements for serialized connection, includes null.
+	uint32_t r = name_size + 1;
+	if (connection->version != FLSHM_VERSION_1) {
+		r += connection->sandbox != FLSHM_SECURITY_NONE ? 8 : 4;
+	}
+	return r;
+}
+
+
+uint32_t flshm_connection_write(flshm_connection * connection, char * p, uint32_t max) {
+	if (
+		max < FLSHM_CONNECTION_ENCODE_MAX_SIZE &&
+		max < flshm_connection_encode_size(connection)
+	) {
+		return 0;
+	}
+
+	// Copy connection name and remember length.
+	uint32_t i = 0;
+	for (char c; (c = connection->name[i]) != '\x00'; i++) {
+		p[i] = c;
+	}
+	p[i++] = '\x00';
+
+	// Add the meta data if present, '0' and '1' indexed.
+	if (connection->version != FLSHM_VERSION_1) {
+		p[i++] = ':';
+		p[i++] = ':';
+		p[i++] = (char)((uint8_t)'0' + connection->version);
+		p[i++] = '\x00';
+		if (connection->sandbox != FLSHM_SECURITY_NONE) {
+			p[i++] = ':';
+			p[i++] = ':';
+			p[i++] = (char)((uint8_t)'1' + connection->sandbox);
+			p[i++] = '\x00';
+		}
+	}
+
+	return i;
 }
 
 

@@ -95,6 +95,12 @@
 
 
 /**
+ * Maximum size of an encoded connection.
+ */
+#define FLSHM_CONNECTION_ENCODE_MAX_SIZE (FLSHM_CONNECTION_NAME_MAX_SIZE + 8)
+
+
+/**
  * Maximum length of a keys string if used, not including null byte.
  */
 #define FLSHM_KEYS_STRING_MAX_LENGTH 23
@@ -477,6 +483,18 @@ bool flshm_connection_add(flshm_info * info, flshm_connection * connection);
  * Remove a connection from the list of registerd connections.
  */
 bool flshm_connection_remove(flshm_info * info, flshm_connection * connection);
+
+
+/**
+ * Calculate encoded size of a connection.
+ */
+uint32_t flshm_connection_encode_size(flshm_connection * connection);
+
+
+/**
+ * Write connection to address.
+ */
+uint32_t flshm_connection_write(flshm_connection * connection, char * p, uint32_t max);
 
 
 /**
