@@ -8,6 +8,7 @@ all: universal-as2 \
 	prefixed-as2 prefixed-as3 \
 	multipleargs-as2 multipleargs-as3 \
 	selfsending-as2 selfsending-as3 \
+	strnullbyte-as2 strnullbyte-as3 \
 	messenger-as2 messenger-as3 \
 	restrict-as2 restrict-as3 \
 	allowdomain-as3 \
@@ -19,6 +20,7 @@ clean: universal-as2-clean \
 	prefixed-as2-clean prefixed-as3-clean \
 	multipleargs-as2-clean multipleargs-as3-clean \
 	selfsending-as2-clean selfsending-as3-clean \
+	strnullbyte-as2-clean strnullbyte-as3-clean \
 	messenger-as2-clean messenger-as3-clean \
 	restrict-as2-clean restrict-as3-clean \
 	allowdomain-as3-clean \
@@ -101,6 +103,24 @@ selfsending-as3:
 
 selfsending-as3-clean:
 	$(RMF) $(CURDIR)/selfsending/as3/*.swf
+
+
+strnullbyte-as2:
+	$(MAKESWF) -v 8 \
+		-o $(CURDIR)/strnullbyte/as2/strnullbyte-as2.swf \
+		$(CURDIR)/strnullbyte/as2/strnullbyte-as2.as
+
+strnullbyte-as2-clean:
+	$(RMF) $(CURDIR)/strnullbyte/as2/*.pp
+	$(RMF) $(CURDIR)/strnullbyte/as2/*.swf
+
+strnullbyte-as3:
+	$(AS3COMP) -T 9 \
+		-o $(CURDIR)/strnullbyte/as3/strnullbyte-as3.swf \
+		$(CURDIR)/strnullbyte/as3/strnullbyte-as3.as
+
+strnullbyte-as3-clean:
+	$(RMF) $(CURDIR)/strnullbyte/as3/*.swf
 
 
 messenger-as2:

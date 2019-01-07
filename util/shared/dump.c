@@ -57,20 +57,38 @@ void dump_hex(void * addr, unsigned int size, bool skip_null) {
 }
 
 void dump_msg(flshm_message * message) {
+	char amf0_cstr[FLSHM_AMF0_STRING_DECODE_MAX_SIZE];
 	printf("Message:\n");
 	printf("    tick: %u\n", message->tick);
 	printf("    amfl: %u\n", message->amfl);
-	printf("    name: %s\n", message->name);
-	printf("    host: %s\n", message->host);
+	flshm_amf0_decode_string_cstr(&message->name, amf0_cstr, false);
+	printf("    name: %s\n", amf0_cstr);
+	flshm_amf0_decode_string_cstr(&message->host, amf0_cstr, false);
+	printf("    host: %s\n", amf0_cstr);
 	printf("    version: %i\n", message->version);
 	printf("    sandboxed: %i\n", message->sandboxed);
 	printf("    https: %i\n", message->https);
 	printf("    sandbox: %u\n", message->sandbox);
 	printf("    swfv: %u\n", message->swfv);
-	printf("    filepath: %s\n", message->filepath);
+	flshm_amf0_decode_string_cstr(&message->filepath, amf0_cstr, false);
+	printf("    filepath: %s\n", amf0_cstr);
 	printf("    amfv: %i\n", message->amfv);
-	printf("    method: %s\n", message->method);
+	flshm_amf0_decode_string_cstr(&message->method, amf0_cstr, false);
+	printf("    method: %s\n", amf0_cstr);
 	printf("    size: %u\n", message->size);
 	printf("    data:\n");
 	dump_hex(message->data, message->size, false);
+}
+
+void dump_str(void * addr, int size) {
+	unsigned char * p = (unsigned char *)addr;
+	bool sized = size >= 0;
+	for (int i = 0;; i++) {
+		if (sized && i >= size) {
+			break;
+		}
+		else if (!*p) {
+			break;
+		}
+	}
 }

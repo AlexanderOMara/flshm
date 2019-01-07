@@ -9,7 +9,7 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 
-	if (!flshm_connection_name_valid(argv[1])) {
+	if (!flshm_connection_name_valid_cstr(argv[1])) {
 		return EXIT_FAILURE;
 	}
 

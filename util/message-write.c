@@ -73,16 +73,28 @@ int main(int argc, char ** argv) {
 	// Create message.
 	flshm_message message;
 	message.tick = tick;
-	strcpy(message.name, name);
-	strcpy(message.host, host);
+	flshm_amf0_encode_string_cstr(
+		&message.name,
+		name
+	);
+	flshm_amf0_encode_string_cstr(
+		&message.host,
+		host
+	);
 	message.version = version;
 	message.sandboxed = sandboxed;
 	message.https = https;
 	message.sandbox = sandbox;
 	message.swfv = swfv;
-	strcpy(message.filepath, filepath);
+	flshm_amf0_encode_string_cstr(
+		&message.filepath,
+		filepath
+	);
 	message.amfv = amfv;
-	strcpy(message.method, method);
+	flshm_amf0_encode_string_cstr(
+		&message.method,
+		method
+	);
 	message.size = (uint32_t)size;
 	memcpy(message.data, data, size);
 

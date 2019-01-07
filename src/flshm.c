@@ -24,7 +24,7 @@
 #include "flshm.h"
 
 
-uint32_t flshm_amf0_read_string(char * str, char * p, uint32_t max) {
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, char * p, uint32_t max) {
 	// Bounds check the header.
 	if (max < 3) {
 		return false;
@@ -36,26 +36,28 @@ uint32_t flshm_amf0_read_string(char * str, char * p, uint32_t max) {
 	}
 	p++;
 
-	// Read the string length, big endian.
-	uint16_t sl =
+	// Read the string size, big endian.
+	uint16_t size =
 		((*((uint8_t *)p + 1)     ) & 0xFF  ) |
 		((*((uint8_t *)p    ) << 8) & 0xFF00);
 	p += 2;
 
 	// Compute total data size.
-	uint32_t size = sl + 3;
+	uint32_t encode_size = size + 3;
 
 	// Bounds check the length.
-	if (size > max) {
+	if (encode_size > max) {
 		return false;
 	}
 
-	// Copy string to memory, null terminate.
-	memcpy(str, p, sl);
-	str[sl] = '\0';
+	// Set the string size.
+	str->size = size;
 
-	// Return the amout of data read.
-	return size;
+	// Copy string the string data, not null terminated.
+	memcpy(str->data, p, size);
+
+	// Return the amount of data read.
+	return encode_size;
 }
 
 
@@ -112,28 +114,27 @@ uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max) {
 }
 
 
-uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max) {
-	// Get string length and bounds check.
-	size_t l = strlen(str);
-	uint32_t size = (uint32_t)(l + 3);
-	if (l > FLSHM_AMF0_STRING_MAX_LENGTH || size > max) {
+uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, uint32_t max) {
+	// Get encode length and bounds check.
+	uint16_t size = str->size;
+	uint32_t encode_size = size + 3;
+	if (encode_size > max) {
 		return 0;
 	}
-	uint16_t sl = (uint16_t)l;
 
 	// Write the string marker.
 	*p = '\x02';
 	p++;
 
 	// Write the string size, big engian.
-	*((uint8_t *)p    ) = (sl >> 8) & 0xFF;
-	*((uint8_t *)p + 1) = (sl     ) & 0xFF;
+	*((uint8_t *)p    ) = (size >> 8) & 0xFF;
+	*((uint8_t *)p + 1) = (size     ) & 0xFF;
 	p += 2;
 
 	// Copy the string without null byte.
-	memcpy(p, str, sl);
+	memcpy(p, str->data, size);
 
-	return size;
+	return encode_size;
 }
 
 
@@ -183,6 +184,40 @@ uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max) {
 }
 
 
+bool flshm_amf0_decode_string_cstr(const flshm_amf0_string * str, char * to, bool skip_null) {
+	bool r = true;
+	uint16_t size = str->size;
+	uint16_t i = 0;
+	for (; i < size; i++) {
+		char c = str->data[i];
+		if (c == '\x00') {
+			if (skip_null) {
+				r = false;
+				continue;
+			}
+			break;
+		}
+		to[i] = c;
+	}
+	to[i] = '\x00';
+	if (i != size) {
+		r = false;
+	}
+	return r;
+}
+
+
+bool flshm_amf0_encode_string_cstr(flshm_amf0_string * str, const char * from) {
+	size_t size = strlen(from);
+	if (size > FLSHM_AMF0_STRING_DATA_MAX_SIZE) {
+		return false;
+	}
+	memcpy(str->data, from, size);
+	str->size = (uint16_t)size;
+	return true;
+}
+
+
 char * flshm_write_connection(char * addr, flshm_connection * connection) {
 	// Copy the name with the null byte into the list and advance past it.
 	uint32_t name_size = (uint32_t)strlen(connection->name);
@@ -195,12 +230,12 @@ char * flshm_write_connection(char * addr, flshm_connection * connection) {
 		*(addr++) = ':';
 		*(addr++) = ':';
 		*(addr++) = (char)((uint8_t)'0' + connection->version);
-		*(addr++) = '\0';
+		*(addr++) = '\x00';
 		if (connection->sandbox != FLSHM_SECURITY_NONE) {
 			*(addr++) = ':';
 			*(addr++) = ':';
 			*(addr++) = (char)((uint8_t)'1' + connection->sandbox);
-			*(addr++) = '\0';
+			*(addr++) = '\x00';
 		}
 	}
 
@@ -462,43 +497,50 @@ bool flshm_unlock(flshm_info * info) {
 }
 
 
-bool flshm_connection_name_valid(const char * name) {
-	// First character must not be ':' or null.
-	if (name[0] == ':' || name[0] == '\0') {
+bool flshm_connection_name_valid(const char * name, size_t size) {
+	// Check if too large.
+	if (size > FLSHM_CONNECTION_NAME_MAX_LENGTH) {
+		return false;
+	}
+
+	// First character must exist and not be ':' or null.
+	if (size == 0 || name[0] == ':' || name[0] == '\x00') {
 		return false;
 	}
 
 	// Check how many colons are expected, and keep track of those seen.
 	uint8_t colons_valid = name[0] == '_' ? 0 : 1;
 	uint8_t colons = 0;
-	for (uint32_t i = 0;; i++) {
-		// Check if too large.
-		if (i >= FLSHM_AMF0_STRING_MAX_LENGTH) {
-			return false;
-		}
-
+	for (uint32_t i = 0; i < size; i++) {
 		char c = name[i];
 
-		// If null, end of the string.
-		if (c == '\0') {
-			// Must have length and not end in ':'.
-			if (i == 0 || name[i - 1] == ':') {
-				return false;
-			}
-			break;
+		// Should not encounter a null byte within size.
+		if (c == '\x00') {
+			return false;
 		}
 
 		// If colon, make sure not more than expected.
 		if (c == ':') {
-			if (colons >= colons_valid) {
+			colons++;
+			if (colons > colons_valid) {
 				return false;
 			}
-			colons++;
 		}
 	}
 
 	// If saw the expected colon count, return valid.
 	return colons == colons_valid;
+}
+
+
+bool flshm_connection_name_valid_cstr(const char * name) {
+	size_t len = strlen(name);
+	return flshm_connection_name_valid(name, len);
+}
+
+
+bool flshm_connection_name_valid_amf0(const flshm_amf0_string * name) {
+	return flshm_connection_name_valid(name->data, name->size);
 }
 
 
@@ -517,7 +559,7 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 		char pc = *p;
 
 		// Unexpected null byte terminates the list.
-		if (pc == '\0') {
+		if (pc == '\x00') {
 			break;
 		}
 		else if (pc == ':') {
@@ -525,8 +567,8 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 			if (
 				i < FLSHM_CONNECTIONS_SIZE - 3 &&
 				*(p + 1) == ':' &&
-				*(p + 2) != '\0' &&
-				*(p + 3) == '\0'
+				*(p + 2) != '\x00' &&
+				*(p + 3) == '\x00'
 			) {
 				// Check that we are still parsing a connection.
 				if (name) {
@@ -545,7 +587,7 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 			else {
 				// Otherwise seek until the next null or end.
 				for (; i < FLSHM_CONNECTIONS_SIZE; i++) {
-					if (*(memory + i) == '\0') {
+					if (*(memory + i) == '\x00') {
 						break;
 					}
 				}
@@ -573,9 +615,9 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 
 			// Seek out the null in the remaining memory.
 			for (; i < FLSHM_CONNECTIONS_SIZE; i++) {
-				if (*(memory + i) == '\0') {
+				if (*(memory + i) == '\x00') {
 					// If nulled and valid, set name.
-					if (flshm_connection_name_valid(p)) {
+					if (flshm_connection_name_valid_cstr(p)) {
 						name = p;
 					}
 					break;
@@ -597,7 +639,7 @@ void flshm_connection_list(flshm_info * info, flshm_connected * list) {
 
 bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 	// Validate the connection name.
-	if (!flshm_connection_name_valid(connection->name)) {
+	if (!flshm_connection_name_valid_cstr(connection->name)) {
 		return false;
 	}
 
@@ -629,12 +671,12 @@ bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 	// Seek out end of connection list, if entries are present.
 	char * memory = ((char *)info->data) + FLSHM_CONNECTIONS_OFFSET;
 	uint32_t offset = 0;
-	if (*memory != '\0') {
+	if (*memory != '\x00') {
 		// Seek for double null, make default offset invalid.
-		offset = 0xFFFFFFFF;
+		offset = FLSHM_CONNECTIONS_SIZE;
 		for (uint32_t i = 0; i < FLSHM_CONNECTIONS_SIZE - 1; i++) {
 			char * p = memory + i;
-			if (*p == '\0' && *(p + 1) == '\0') {
+			if (*p == '\x00' && *(p + 1) == '\x00') {
 				offset = i + 1;
 				break;
 			}
@@ -653,7 +695,7 @@ bool flshm_connection_add(flshm_info * info, flshm_connection * connection) {
 	char * addr = flshm_write_connection(memory + offset, connection);
 
 	// Add list terminating null.
-	*(addr + 1) = '\0';
+	*(addr + 1) = '\x00';
 
 	return true;
 }
@@ -689,7 +731,7 @@ bool flshm_connection_remove(flshm_info * info, flshm_connection * connection) {
 	}
 
 	// Add list terminating null.
-	*(addr) = '\0';
+	*(addr) = '\x00';
 
 	return found;
 }
@@ -741,7 +783,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 	for (;;) {
 		// Read the connection name, or fail.
 		re = flshm_amf0_read_string(
-			message->name,
+			&message->name,
 			shmdata + i,
 			max - i
 		);
@@ -752,7 +794,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 
 		// Read the host name, or fail.
 		re = flshm_amf0_read_string(
-			message->host,
+			&message->host,
 			shmdata + i,
 			max - i
 		);
@@ -816,7 +858,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 				// If sandbox local-with-file, includes sender filepath.
 				if (sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE) {
 					re = flshm_amf0_read_string(
-						message->filepath,
+						&message->filepath,
 						shmdata + i,
 						max - i
 					);
@@ -826,7 +868,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 					i += re;
 				}
 				else {
-					message->filepath[0] = '\0';
+					message->size = 0;
 				}
 
 				// Read AMF version if present, else ignore.
@@ -847,7 +889,7 @@ bool flshm_message_read(flshm_info * info, flshm_message * message) {
 
 		// Read the method name or fail.
 		re = flshm_amf0_read_string(
-			message->method,
+			&message->method,
 			shmdata + i,
 			max - i
 		);
@@ -888,12 +930,12 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 	}
 
 	// Validate connection is set and valid.
-	if (!flshm_connection_name_valid(message->name)) {
+	if (!flshm_connection_name_valid_amf0(&message->name)) {
 		return false;
 	}
 
 	// Validate host is set.
-	if (!message->host[0]) {
+	if (!message->host.size) {
 		return false;
 	}
 
@@ -901,13 +943,13 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 	if (
 		message->version >= FLSHM_VERSION_3 &&
 		message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE &&
-		!message->filepath[0]
+		!message->filepath.size
 	) {
 		return false;
 	}
 
 	// Validate method is set.
-	if (!message->method[0]) {
+	if (!message->method.size) {
 		return false;
 	}
 
@@ -924,7 +966,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 
 		// Write the connection name or fail.
 		wr = flshm_amf0_write_string(
-			message->name,
+			&message->name,
 			buffer + i,
 			max - i
 		);
@@ -935,7 +977,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 
 		// Write the connection host or fail.
 		wr = flshm_amf0_write_string(
-			message->host,
+			&message->host,
 			buffer + i,
 			max - i
 		);
@@ -998,7 +1040,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 					message->sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE
 				) {
 					wr = flshm_amf0_write_string(
-						message->filepath,
+						&message->filepath,
 						buffer + i,
 						max - i
 					);
@@ -1026,7 +1068,7 @@ bool flshm_message_write(flshm_info * info, flshm_message * message) {
 
 		// Write method or fail.
 		wr = flshm_amf0_write_string(
-			message->method,
+			&message->method,
 			buffer + i,
 			max - i
 		);

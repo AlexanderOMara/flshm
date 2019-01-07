@@ -19,7 +19,7 @@
 /**
  * The size of the shared memory.
  */
-#define FLSHM_SIZE 64528
+#define FLSHM_SIZE 0xFC10
 
 
 /**
@@ -43,19 +43,19 @@
 /**
  * The maximum size an encoded message can be, includes all but the header.
  */
-#define FLSHM_MESSAGE_MAX_SIZE 40960
+#define FLSHM_MESSAGE_MAX_SIZE 0xA000
 
 
 /**
  * The offset of the list of connection names.
  */
-#define FLSHM_CONNECTIONS_OFFSET 40976
+#define FLSHM_CONNECTIONS_OFFSET 0xA010
 
 
 /**
  * The size of the list of connection names.
  */
-#define FLSHM_CONNECTIONS_SIZE 23552
+#define FLSHM_CONNECTIONS_SIZE 0x5C00
 
 
 /**
@@ -65,25 +65,43 @@
 
 
 /**
- * Maximum length of an AMF0 string.
+ * Maximum size of an AMF0 string encoded data.
  */
-#define FLSHM_AMF0_STRING_MAX_LENGTH 0xFFFF
+#define FLSHM_AMF0_STRING_DATA_MAX_SIZE 0xFFFF
 
 
 /**
- * Maximum size of an AMF0 string.
+ * Maximum length of an AMF0 string after decoding, not including null byte.
  */
-#define FLSHM_AMF0_STRING_MAX_SIZE (FLSHM_AMF0_STRING_MAX_LENGTH + 1)
+#define FLSHM_AMF0_STRING_DECODE_MAX_LENGTH FLSHM_AMF0_STRING_DATA_MAX_SIZE
 
 
 /**
- * Maximum length of a keys string if used.
+ * Maximum size of an AMF0 string after decoding, includes a null byte.
+ */
+#define FLSHM_AMF0_STRING_DECODE_MAX_SIZE (FLSHM_AMF0_STRING_DECODE_MAX_LENGTH + 1)
+
+
+/**
+ * Maximum size of a connection name, includes a null byte.
+ */
+#define FLSHM_CONNECTION_NAME_MAX_SIZE FLSHM_CONNECTIONS_SIZE
+
+
+/**
+ * Maximum length of a connection name, not including null byte.
+ */
+#define FLSHM_CONNECTION_NAME_MAX_LENGTH (FLSHM_CONNECTION_NAME_MAX_SIZE - 1)
+
+
+/**
+ * Maximum length of a keys string if used, not including null byte.
  */
 #define FLSHM_KEYS_STRING_MAX_LENGTH 23
 
 
 /**
- * Maximum size of a keys string if used.
+ * Maximum size of a keys string if used, includes a null byte.
  */
 #define FLSHM_KEYS_STRING_MAX_SIZE (FLSHM_KEYS_STRING_MAX_LENGTH + 1)
 
@@ -131,6 +149,17 @@ typedef enum flshm_amf {
 } flshm_amf;
 
 
+
+
+/**
+ * An encoded AMF0 string which may contain null bytes.
+ * The size of the string data is defined in size.
+ * The data of the string is not null terminated.
+ */
+typedef struct flshm_amf0_string {
+	uint16_t size;
+	char data[FLSHM_AMF0_STRING_DATA_MAX_SIZE];
+} flshm_amf0_string;
 
 
 /**
@@ -184,7 +213,7 @@ typedef struct flshm_connection {
 	/**
 	 * Connection name.
 	 */
-	char name[FLSHM_AMF0_STRING_MAX_LENGTH];
+	char name[FLSHM_CONNECTION_NAME_MAX_LENGTH];
 
 	/**
 	 * Version (FP7+).
@@ -231,12 +260,12 @@ typedef struct flshm_message {
 	/**
 	 * The sending connection name.
 	 */
-	char name[FLSHM_AMF0_STRING_MAX_SIZE];
+	flshm_amf0_string name;
 
 	/**
 	 * The sending conneciton host.
 	 */
-	char host[FLSHM_AMF0_STRING_MAX_SIZE];
+	flshm_amf0_string host;
 
 	/**
 	 * What version the message format is.
@@ -277,7 +306,7 @@ typedef struct flshm_message {
 	 * FLSHM_VERSION_3+
 	 * FP8+ and sandbox == FLSHM_SECURITY_LOCAL_WITH_FILE
 	 */
-	char filepath[FLSHM_AMF0_STRING_MAX_SIZE];
+	flshm_amf0_string filepath;
 
 	/**
 	 * The AMF version the message data is encoded with.
@@ -291,7 +320,7 @@ typedef struct flshm_message {
 	/**
 	 * The method name to be called in by the reciever.
 	 */
-	char method[FLSHM_AMF0_STRING_MAX_SIZE];
+	flshm_amf0_string method;
 
 	/**
 	 * The size of the message arguments data.
@@ -307,21 +336,70 @@ typedef struct flshm_message {
 
 
 
-uint32_t flshm_amf0_read_string(char * str, char * p, uint32_t max);
+/**
+ * Read an AMF0 string.
+ */
+uint32_t flshm_amf0_read_string(flshm_amf0_string * str, char * p, uint32_t max);
 
+
+/**
+ * Read an AMF0 boolean.
+ */
 uint32_t flshm_amf0_read_boolean(bool * flag, char * p, uint32_t max);
 
+
+/**
+ * Read an AMF0 double.
+ */
 uint32_t flshm_amf0_read_double(double * number, char * p, uint32_t max);
 
-uint32_t flshm_amf0_write_string(char * str, char * p, uint32_t max);
 
+/**
+ * Write an AMF0 string.
+ */
+uint32_t flshm_amf0_write_string(const flshm_amf0_string * str, char * p, uint32_t max);
+
+
+/**
+ * Write an AMF0 boolean.
+ */
 uint32_t flshm_amf0_write_boolean(bool flag, char * p, uint32_t max);
 
+
+/**
+ * Write an AMF0 double.
+ */
 uint32_t flshm_amf0_write_double(double number, char * p, uint32_t max);
 
+
+/**
+ * Decodes an AMF0 string into a C-string.
+ * An AMF0 string can contain null byte so this can be a lossy operation.
+ * The out buffer must be at least FLSHM_AMF0_STRING_DECODE_MAX_SIZE in size.
+ * Set skip_null to skip over null bytes instead of stopping on the first one.
+ * Returns true if full string was read without skipping any null bytes.
+ */
+bool flshm_amf0_decode_string_cstr(const flshm_amf0_string * str, char * to, bool skip_null);
+
+
+/**
+ * Encode an AMF0 string from a C-string.
+ * Returns true if encode was successful.
+ */
+bool flshm_amf0_encode_string_cstr(flshm_amf0_string * str, const char * from);
+
+
+/**
+ * Hash UID for use in key.
+ */
 uint32_t flshm_hash_uid(uint32_t uid);
 
+
+/**
+ * Check if shared memory data inited.
+ */
 bool flshm_shm_inited(void * shmdata);
+
 
 /**
  * Generate a message tick.
@@ -365,8 +443,23 @@ bool flshm_unlock(flshm_info * info);
 
 /**
  * Check if connection name is valid.
+ * Requires passing actual string data size.
  */
-bool flshm_connection_name_valid(const char * name);
+bool flshm_connection_name_valid(const char * name, size_t size);
+
+
+/**
+ * Check if connection name is valid.
+ * Takes a regular null-terminated C-string.
+ */
+bool flshm_connection_name_valid_cstr(const char * name);
+
+
+/**
+ * Check if connection name is valid.
+ * Takes an AMF0 encoded string.
+ */
+bool flshm_connection_name_valid_amf0(const flshm_amf0_string * name);
 
 
 /**
